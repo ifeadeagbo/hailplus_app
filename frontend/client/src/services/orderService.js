@@ -16,6 +16,11 @@ const orderService = {
     return data;
   },
 
+  confirmPayment: async (id) => {
+    const { data } = await api.post(`/orders/${id}/confirm-payment`);
+    return data;
+  },
+
   cancelOrder: async (id) => {
     const { data } = await api.post(`/orders/${id}/cancel`);
     return data;

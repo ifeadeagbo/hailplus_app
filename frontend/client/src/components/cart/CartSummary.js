@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 
 const CartSummary = () => {
-  const { cartSummary, discount, applyDiscountCode, validateCart } = useCart();
+  const { cartSummary, discount, applyDiscountCode, removeDiscount, validateCart } = useCart();
   const [code, setCode] = useState('');
   const [checkingOut, setCheckingOut] = useState(false);
   const navigate = useNavigate();
@@ -56,8 +56,13 @@ const CartSummary = () => {
         </div>
         {discount && (
           <div className="flex justify-between text-green-600">
-            <span>Discount ({discount.code})</span>
-            <span>-${discount.discountAmount}</span>
+            <span>
+              Discount ({discount.code}){' '}
+              <button onClick={removeDiscount} className="text-gray-500 hover:text-red-600 underline">
+                remove
+              </button>
+            </span>
+            <span>-${cartSummary.discountAmount}</span>
           </div>
         )}
       </div>

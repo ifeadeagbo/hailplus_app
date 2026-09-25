@@ -1,6 +1,16 @@
 const { Cart, Product, User } = require('../models');
 const { Op } = require('sequelize');
 const { sequelize } = require('../models');
+const { calculateTotals, findDiscount } = require('../utils/pricing');
+
+// Cart summary for API responses (drops the internal cents breakdown)
+const summarize = (cartItems, discountCode) => {
+  const lines = cartItems
+    .filter(item => item.Product)
+    .map(item => ({ price: item.Product.price, quantity: item.quantity }));
+  const { cents, ...summary } = calculateTotals(lines, discountCode);
+  return summary;
+};
 
 // Get user's cart
 exports.getCart = async (req, res, next) => {
@@ -17,12 +27,9 @@ exports.getCart = async (req, res, next) => {
       order: [['createdAt', 'DESC']]
     });
     
-    // Calculate totals
-    const cartSummary = calculateCartSummary(cartItems);
-    
     res.json({
       items: cartItems,
-      summary: cartSummary
+      summary: summarize(cartItems, req.query.discountCode)
     });
   } catch (error) {
     next(error);
@@ -355,7 +362,6 @@ exports.validateCart = async (req, res, next) => {
     
     const issues = [];
     const validItems = [];
-    let totalAmount = 0;
     
     for (const item of cartItems) {
       // Check if product still exists and is active
@@ -384,11 +390,9 @@ exports.validateCart = async (req, res, next) => {
           item.quantity = item.Product.stock;
           await item.save();
           validItems.push(item);
-          totalAmount += parseFloat(item.Product.price) * item.quantity;
         }
       } else {
         validItems.push(item);
-        totalAmount += parseFloat(item.Product.price) * item.quantity;
       }
     }
     
@@ -405,7 +409,7 @@ exports.validateCart = async (req, res, next) => {
         quantity: item.quantity,
         subtotal: parseFloat(item.Product.price) * item.quantity
       })),
-      totalAmount,
+      summary: summarize(validItems, req.query.discountCode),
       message: isValid ? 'Cart is valid' : 'Cart has issues that need attention'
     });
   } catch (error) {
@@ -416,18 +420,7 @@ exports.validateCart = async (req, res, next) => {
 // Apply discount code to cart
 exports.applyDiscount = async (req, res, next) => {
   try {
-    const { discountCode } = req.body;
-    
-    // This is a placeholder for discount logic
-    // In production, you'd have a DiscountCode model
-    const discounts = {
-      'WELCOME10': { type: 'percentage', value: 10 },
-      'SAVE20': { type: 'percentage', value: 20 },
-      'FREESHIP': { type: 'shipping', value: 100 },
-      'FLAT50': { type: 'fixed', value: 50 }
-    };
-    
-    const discount = discounts[discountCode.toUpperCase()];
+    const discount = findDiscount(req.body.discountCode);
     
     if (!discount) {
       return res.status(400).json({ 
@@ -435,7 +428,6 @@ exports.applyDiscount = async (req, res, next) => {
       });
     }
     
-    // Get cart total
     const cartItems = await Cart.findAll({
       where: { 
         userId: req.user.id, 
@@ -444,62 +436,22 @@ exports.applyDiscount = async (req, res, next) => {
       include: [{ model: Product }]
     });
     
-    const subtotal = cartItems.reduce((total, item) => {
-      return total + (parseFloat(item.Product.price) * item.quantity);
-    }, 0);
-    
-    let discountAmount = 0;
-    
-    switch (discount.type) {
-      case 'percentage':
-        discountAmount = subtotal * (discount.value / 100);
-        break;
-      case 'fixed':
-        discountAmount = Math.min(discount.value, subtotal);
-        break;
-      case 'shipping':
-        discountAmount = 0; // Handle in checkout
-        break;
-    }
+    const summary = summarize(cartItems, discount.code);
     
     res.json({
       message: 'Discount applied',
       discount: {
-        code: discountCode.toUpperCase(),
+        code: discount.code,
         type: discount.type,
         value: discount.value,
-        discountAmount: discountAmount.toFixed(2),
-        finalTotal: (subtotal - discountAmount).toFixed(2)
-      }
+        discountAmount: summary.discountAmount,
+        finalTotal: summary.total
+      },
+      summary
     });
   } catch (error) {
     next(error);
   }
-};
-
-// Helper function to calculate cart summary
-const calculateCartSummary = (cartItems) => {
-  const subtotal = cartItems.reduce((total, item) => {
-    return total + (parseFloat(item.Product?.price || 0) * item.quantity);
-  }, 0);
-  
-  const itemCount = cartItems.reduce((count, item) => {
-    return count + item.quantity;
-  }, 0);
-  
-  const tax = subtotal * 0.1; // 10% tax
-  const shipping = subtotal > 100 ? 0 : 10; // Free shipping over $100
-  const total = subtotal + tax + shipping;
-  
-  return {
-    itemCount,
-    subtotal: subtotal.toFixed(2),
-    tax: tax.toFixed(2),
-    shipping: shipping.toFixed(2),
-    total: total.toFixed(2),
-    freeShippingEligible: subtotal > 100,
-    freeShippingRemaining: subtotal > 100 ? 0 : (100 - subtotal).toFixed(2)
-  };
 };
 
 module.exports = exports;

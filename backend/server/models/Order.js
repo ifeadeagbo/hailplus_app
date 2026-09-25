@@ -15,6 +15,30 @@ const Order = sequelize.define('Order', {
     type: DataTypes.JSONB,
     allowNull: false
   },
+  subtotal: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0
+  },
+  discountCode: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  discountAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0
+  },
+  tax: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0
+  },
+  shipping: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0
+  },
   totalAmount: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false

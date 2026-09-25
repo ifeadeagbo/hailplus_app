@@ -17,7 +17,7 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [cartSummary, setCartSummary] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [discount, setDiscount] = useState(null);
   const { isAuthenticated } = useAuth();
 
@@ -32,13 +32,14 @@ export const CartProvider = ({ children }) => {
       } else {
         setCartItems([]);
       }
+      setLoading(false);
     }
   }, [isAuthenticated]);
 
-  const fetchCart = async () => {
+  const fetchCart = async (discountCode = discount?.code) => {
     try {
       setLoading(true);
-      const response = await cartService.getCart();
+      const response = await cartService.getCart(discountCode);
       setCartItems(response.items || []);
       setCartSummary(response.summary || null);
     } catch (error) {
@@ -124,12 +125,18 @@ export const CartProvider = ({ children }) => {
     try {
       const response = await cartService.applyDiscount(code);
       setDiscount(response.discount);
+      setCartSummary(response.summary);
       toast.success('Discount applied successfully');
       return response;
     } catch (error) {
       toast.error(error.response?.data?.error || 'Invalid discount code');
       throw error;
     }
+  };
+
+  const removeDiscount = async () => {
+    setDiscount(null);
+    await fetchCart(null);
   };
 
   const mergeGuestCart = async () => {
@@ -178,6 +185,7 @@ export const CartProvider = ({ children }) => {
     fetchCart,
     validateCart,
     applyDiscountCode,
+    removeDiscount,
     mergeGuestCart,
     getCartTotal,
     getCartCount

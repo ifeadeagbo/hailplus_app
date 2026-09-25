@@ -17,6 +17,7 @@ const userRoutes = require('./routes/users');
 const publicRoutes = require('./routes/public');
 const webhookRoutes = require('./routes/webhooks');
 const errorHandler = require('./middleware/errorHandler');
+const { expireStaleOrders } = require('./utils/orderLifecycle');
 
 const app = express();
 const PORT = process.env.PORT || 5050;
@@ -80,6 +81,11 @@ sequelize.sync({ alter: true }).then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
+
+  // Release stock held by checkouts that were never paid
+  setInterval(() => {
+    expireStaleOrders().catch(err => console.error('Stale order sweep failed:', err));
+  }, 5 * 60 * 1000);
 }).catch(err => {
   console.error('Unable to connect to database:', err);
 });

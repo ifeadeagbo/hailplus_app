@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { CardElement, useStripe } from '@stripe/react-stripe-js';
 
 const fields = [
   { name: 'firstName', label: 'First Name', half: true },
@@ -16,40 +16,14 @@ const fields = [
   }
 ];
 
-const CheckoutForm = ({ onSubmit }) => {
+// Collects the shipping address and card details. The parent page creates
+// the order and confirms the payment with Stripe.
+const CheckoutForm = ({ onSubmit, error }) => {
   const stripe = useStripe();
-  const elements = useElements();
-  const [cardError, setCardError] = useState(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
 
-  const submit = async (shipping) => {
-    if (!stripe || !elements) return;
-    setCardError(null);
-
-    const { error, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: elements.getElement(CardElement),
-      billing_details: {
-        name: `${shipping.firstName} ${shipping.lastName}`,
-        address: {
-          line1: shipping.address,
-          city: shipping.city,
-          state: shipping.state,
-          postal_code: shipping.zipCode
-        }
-      }
-    });
-
-    if (error) {
-      setCardError(error.message);
-      return;
-    }
-
-    await onSubmit({ ...shipping, paymentMethodId: paymentMethod.id });
-  };
-
   return (
-    <form onSubmit={handleSubmit(submit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-bold mb-4">Shipping Address</h2>
         <div className="grid grid-cols-2 gap-4">
@@ -77,9 +51,12 @@ const CheckoutForm = ({ onSubmit }) => {
         <div className="px-4 py-3 border rounded-lg">
           <CardElement options={{ hidePostalCode: true }} />
         </div>
-        {cardError && (
-          <p className="text-red-500 text-sm mt-2">{cardError}</p>
+        {error && (
+          <p className="text-red-500 text-sm mt-2">{error}</p>
         )}
+        <p className="text-xs text-gray-500 mt-2">
+          Payments are processed securely by Stripe. Your bank may ask you to verify the payment.
+        </p>
       </div>
 
       <button

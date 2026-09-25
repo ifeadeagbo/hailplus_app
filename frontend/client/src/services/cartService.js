@@ -1,8 +1,8 @@
 import api from './api';
 
 const cartService = {
-  getCart: async () => {
-    const { data } = await api.get('/cart');
+  getCart: async (discountCode) => {
+    const { data } = await api.get('/cart', { params: discountCode ? { discountCode } : {} });
     return data;
   },
 

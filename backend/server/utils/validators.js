@@ -128,9 +128,10 @@ const validateOrder = [
   body('shippingAddress.zipCode')
     .matches(/^\d{5}(-\d{4})?$/)
     .withMessage('Invalid ZIP code'),
-  body('paymentMethodId')
-    .notEmpty()
-    .withMessage('Payment method is required'),
+  body('discountCode')
+    .optional({ values: 'falsy' })
+    .isString()
+    .trim(),
   handleValidationErrors
 ];
 
