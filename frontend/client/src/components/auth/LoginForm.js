@@ -1,14 +1,17 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../context/AuthContext';
 
 const LoginForm = () => {
   const { login } = useAuth();
+  const location = useLocation();
+  const redirectTo = location.state?.from?.pathname || '/';
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
 
   const onSubmit = async (data) => {
     try {
-      await login(data.email, data.password);
+      await login(data.email, data.password, redirectTo);
     } catch (error) {
       console.error('Login error:', error);
     }
@@ -50,6 +53,11 @@ const LoginForm = () => {
         {errors.password && (
           <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
         )}
+        <div className="text-right mt-1">
+          <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
+            Forgot your password?
+          </Link>
+        </div>
       </div>
 
       <button

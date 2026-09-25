@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 
 const CartSummary = () => {
   const { cartSummary, discount, applyDiscountCode, removeDiscount, validateCart } = useCart();
   const [code, setCode] = useState('');
   const [checkingOut, setCheckingOut] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const handleApplyDiscount = async (e) => {
     e.preventDefault();
@@ -20,6 +22,12 @@ const CartSummary = () => {
   };
 
   const handleCheckout = async () => {
+    // Guests sign in first; their cart is merged into the account
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: { pathname: '/checkout' } } });
+      return;
+    }
+
     try {
       setCheckingOut(true);
       const result = await validateCart();

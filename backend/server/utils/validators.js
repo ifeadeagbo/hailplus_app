@@ -131,6 +131,31 @@ const validateAddToCart = [
   handleValidationErrors
 ];
 
+// A cart held in the browser: [{ productId, quantity }]
+const validateCartItems = (field) => [
+  body(field)
+    .isArray({ max: 50 })
+    .withMessage('Cart must be a list of at most 50 items'),
+  body(`${field}.*.productId`)
+    .isUUID()
+    .withMessage('Invalid product ID'),
+  body(`${field}.*.quantity`)
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Quantity must be between 1 and 100')
+    .toInt()
+];
+
+const validateCartQuote = [
+  ...validateCartItems('items'),
+  body('discountCode').optional({ values: 'falsy' }).isString().trim(),
+  handleValidationErrors
+];
+
+const validateCartMerge = [
+  ...validateCartItems('guestCartItems'),
+  handleValidationErrors
+];
+
 const validateUpdateCart = [
   param('id')
     .isUUID()
@@ -197,17 +222,18 @@ const validateUUID = (paramName = 'id') => [
 ];
 
 // Query validators
+// Empty values (?sort=&page=) count as unset: the storefront sends them
 const validatePagination = [
   query('page')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1 })
     .withMessage('Page must be a positive integer'),
   query('limit')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1, max: 100 })
     .withMessage('Limit must be between 1 and 100'),
   query('sort')
-    .optional()
+    .optional({ values: 'falsy' })
     .isIn(['price_asc', 'price_desc', 'name', 'createdAt'])
     .withMessage('Invalid sort option'),
   handleValidationErrors
@@ -225,6 +251,8 @@ module.exports = {
   validateOrderStatus,
   validateAddToCart,
   validateUpdateCart,
+  validateCartQuote,
+  validateCartMerge,
   validateOrder,
   validateUUID,
   validatePagination,

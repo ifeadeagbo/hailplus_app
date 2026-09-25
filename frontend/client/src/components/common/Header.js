@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import store from '../../config/store';
 
 const Header = () => {
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
@@ -18,7 +19,7 @@ const Header = () => {
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold">
-            E-Commerce Store
+            {store.name}
           </Link>
 
           <div className="flex items-center space-x-6">
@@ -26,17 +27,17 @@ const Header = () => {
               Products
             </Link>
 
+            <Link to="/cart" className="relative hover:text-blue-200">
+              Cart
+              {getCartCount() > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
+                  {getCartCount()}
+                </span>
+              )}
+            </Link>
+
             {isAuthenticated ? (
               <>
-                <Link to="/cart" className="relative hover:text-blue-200">
-                  Cart
-                  {getCartCount() > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
-                      {getCartCount()}
-                    </span>
-                  )}
-                </Link>
-
                 <Link to="/orders" className="hover:text-blue-200">
                   Orders
                 </Link>
@@ -48,7 +49,9 @@ const Header = () => {
                 )}
 
                 <div className="flex items-center space-x-4">
-                  <span className="text-sm">Hello, {user?.name}</span>
+                  <Link to="/account" className="text-sm hover:text-blue-200">
+                    Hello, {user?.name}
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded"

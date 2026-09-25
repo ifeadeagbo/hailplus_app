@@ -1,24 +1,16 @@
 import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
-import { useAuth } from '../../context/AuthContext';
-import { toast } from 'react-toastify';
 
 const ProductDetails = ({ product }) => {
   const [quantity, setQuantity] = useState(1);
   const [imageError, setImageError] = useState(false);
   const { addToCart } = useCart();
-  const { isAuthenticated } = useAuth();
 
   const handleAddToCart = async () => {
-    if (!isAuthenticated) {
-      toast.error('Please login to add items to cart');
-      return;
-    }
-
     try {
       await addToCart(product.id, quantity);
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      // The cart context already showed the error
     }
   };
 

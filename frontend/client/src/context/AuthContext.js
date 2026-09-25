@@ -40,12 +40,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, redirectTo = '/') => {
     try {
       const response = await authService.login(email, password);
       setUser(response.user);
       toast.success('Login successful!');
-      navigate('/');
+      navigate(redirectTo, { replace: true });
       return response;
     } catch (error) {
       toast.error(error.response?.data?.error || 'Login failed');
@@ -53,12 +53,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (userData) => {
+  const register = async (userData, redirectTo = '/') => {
     try {
       const response = await authService.register(userData);
       setUser(response.user);
       toast.success('Registration successful!');
-      navigate('/');
+      navigate(redirectTo, { replace: true });
       return response;
     } catch (error) {
       toast.error(error.response?.data?.error || 'Registration failed');
@@ -80,6 +80,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    setUser,
     login,
     register,
     logout,

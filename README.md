@@ -92,6 +92,16 @@ Build with `REACT_APP_API_URL` and `REACT_APP_STRIPE_PUBLIC_KEY` (they are baked
 
 **Serve both from the same site** (e.g. `yourshop.com` and `api.yourshop.com`) over HTTPS. The login cookie is `SameSite=Lax`, so the API and storefront must share a registrable domain.
 
+## Before launch
+
+- [ ] Fill in `frontend/client/src/config/store.js` (store name, business name, address, support email, jurisdiction, social links).
+- [ ] Replace every `[PLACEHOLDER]` in `frontend/client/src/pages/legal/` and have the Privacy Policy, Terms and Returns policy reviewed for your business and country.
+- [ ] Set `STORE_NAME` and `SUPPORT_EMAIL` in the backend environment (used in emails) and configure a real SMTP provider.
+- [ ] Replace the hard-coded discount codes and 10% flat tax in `backend/server/utils/pricing.js` with your real discounts and a tax calculation for the places you sell to (e.g. Stripe Tax), and update the FAQ numbers in `store.js`.
+- [ ] Switch Stripe to live keys and register the production webhook (see Deploying).
+- [ ] Create a real admin account and remove the seeded demo users.
+- [ ] If you add analytics or marketing scripts, add a cookie consent banner and list them on the Cookie Policy page.
+
 ## Operations
 
 - **Logs:** one JSON line per event on stdout in production, including every request with its `X-Request-Id`. Set `LOG_LEVEL` to adjust.

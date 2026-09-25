@@ -41,6 +41,11 @@ const cartService = {
     return data;
   },
 
+  quoteCart: async (items, discountCode) => {
+    const { data } = await api.post('/cart/quote', { items, ...(discountCode && { discountCode }) });
+    return data;
+  },
+
   mergeCarts: async (guestCartItems) => {
     const { data } = await api.post('/cart/merge', { guestCartItems });
     return data;

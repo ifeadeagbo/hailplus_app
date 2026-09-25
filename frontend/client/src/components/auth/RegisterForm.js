@@ -1,15 +1,19 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../context/AuthContext';
 
 const RegisterForm = () => {
   const { register: registerUser } = useAuth();
+  const location = useLocation();
+  const redirectTo = location.state?.from?.pathname || '/';
   const { register, handleSubmit, formState: { errors, isSubmitting }, watch } = useForm();
   const password = watch('password');
 
   const onSubmit = async (data) => {
     try {
-      await registerUser(data);
+      const { name, email, password } = data;
+      await registerUser({ name, email, password }, redirectTo);
     } catch (error) {
       console.error('Registration error:', error);
     }

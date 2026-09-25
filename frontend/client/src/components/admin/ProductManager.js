@@ -38,7 +38,7 @@ const ProductManager = () => {
       setEditingProduct(null);
       reset();
     } catch (error) {
-      toast.error('Error saving product');
+      toast.error(error.response?.data?.error || 'Error saving product');
     }
   };
 

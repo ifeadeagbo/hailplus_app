@@ -141,6 +141,13 @@ describe('input handling', () => {
     expect((await client().get('/api/products/not-a-uuid')).status).toBe(400);
   });
 
+  test('product list accepts the empty filters the storefront sends', async () => {
+    await createProduct();
+    const res = await client().get('/api/products?category=&search=&sort=&page=1');
+    expect(res.status).toBe(200);
+    expect(res.body.products).toHaveLength(1);
+  });
+
   test('page size is capped', async () => {
     expect((await client().get('/api/products?limit=100000')).status).toBe(400);
   });

@@ -67,7 +67,7 @@ const AdminPage = () => {
       toast.success('Order status updated');
       fetchOrders(); // Refresh orders
     } catch (error) {
-      toast.error('Failed to update order status');
+      toast.error(error.response?.data?.error || 'Failed to update order status');
     }
   };
 
@@ -78,7 +78,7 @@ const AdminPage = () => {
       toast.success('User role updated');
       fetchUsers(); // Refresh users
     } catch (error) {
-      toast.error('Failed to update user role');
+      toast.error(error.response?.data?.error || 'Failed to update user role');
     }
   };
 

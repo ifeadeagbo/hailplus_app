@@ -1,6 +1,10 @@
 const nodemailer = require('nodemailer');
 const logger = require('./logger');
 
+const STORE_NAME = process.env.STORE_NAME || 'Our Store';
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || process.env.EMAIL_USER;
+const FROM = `"${STORE_NAME}" <${process.env.EMAIL_USER}>`;
+
 // Escapes user-supplied text (names, addresses) before it goes into email HTML
 const escapeHtml = (value) =>
   String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -19,7 +23,7 @@ const transporter = nodemailer.createTransport({
 
 exports.sendOrderConfirmation = async (email, order) => {
   const mailOptions = {
-    from: `"E-Commerce Store" <${process.env.EMAIL_USER}>`,
+    from: FROM,
     to: email,
     subject: `Order Confirmation #${order.id}`,
     html: `
@@ -41,7 +45,7 @@ exports.sendOrderConfirmation = async (email, order) => {
       <body>
         <div class="container">
           <div class="header">
-            <img src="https://via.placeholder.com/150x50/ffffff/667eea?text=E-Commerce" alt="E-Commerce Store" class="logo">
+            <p style="font-size: 20px; font-weight: bold; margin: 0 0 10px;">${escapeHtml(STORE_NAME)}</p>
             <h1>Thank You For Your Order!</h1>
           </div>
           
@@ -52,14 +56,14 @@ exports.sendOrderConfirmation = async (email, order) => {
             <div class="order-details">
               <h2>Order #${order.id.substring(0, 8).toUpperCase()}</h2>
               <p><strong>Order Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</p>
-              <p><strong>Total Amount:</strong> ${parseFloat(order.totalAmount).toFixed(2)}</p>
+              <p><strong>Total Amount:</strong> $${parseFloat(order.totalAmount).toFixed(2)}</p>
               <p><strong>Status:</strong> ${order.status}</p>
               
               <h3>Order Items:</h3>
               ${order.items.map(item => `
                 <div class="item-row">
                   <strong>${escapeHtml(item.name)}</strong><br>
-                  Quantity: ${item.quantity} | Price: ${parseFloat(item.price).toFixed(2)}
+                  Quantity: ${item.quantity} | Price: $${parseFloat(item.price).toFixed(2)}
                 </div>
               `).join('')}
               
@@ -76,13 +80,8 @@ exports.sendOrderConfirmation = async (email, order) => {
             </center>
             
             <div class="footer">
-              <p>If you have any questions, please contact us at <a href="mailto:support@ecommerce.com">support@ecommerce.com</a></p>
-              <p>Follow us on:
-                <a href="https://facebook.com">Facebook</a> |
-                <a href="https://twitter.com">Twitter</a> |
-                <a href="https://instagram.com">Instagram</a>
-              </p>
-              <p>&copy; 2024 E-Commerce Store. All rights reserved.</p>
+              <p>If you have any questions, please contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></p>
+              <p>&copy; ${new Date().getFullYear()} ${escapeHtml(STORE_NAME)}. All rights reserved.</p>
             </div>
           </div>
         </div>
@@ -103,7 +102,7 @@ exports.sendPasswordReset = async (email, token) => {
   const resetUrl = `${process.env.CLIENT_URL}/reset-password/${token}`;
   
   const mailOptions = {
-    from: `"E-Commerce Store" <${process.env.EMAIL_USER}>`,
+    from: FROM,
     to: email,
     subject: 'Password Reset Request',
     html: `
@@ -127,7 +126,7 @@ exports.sendPasswordReset = async (email, token) => {
           
           <div class="content">
             <p>Hello,</p>
-            <p>We received a request to reset the password for your E-Commerce Store account.</p>
+            <p>We received a request to reset the password for your ${escapeHtml(STORE_NAME)} account.</p>
             
             <center>
               <a href="${resetUrl}" class="button">Reset Password</a>
@@ -142,7 +141,7 @@ exports.sendPasswordReset = async (email, token) => {
               ${resetUrl}
             </p>
             
-            <p>Best regards,<br>The E-Commerce Store Team</p>
+            <p>Best regards,<br>The ${escapeHtml(STORE_NAME)} Team</p>
           </div>
         </div>
       </body>
@@ -160,7 +159,7 @@ exports.sendPasswordReset = async (email, token) => {
 
 exports.sendRefundConfirmation = async (email, order, amount) => {
   const mailOptions = {
-    from: `"E-Commerce Store" <${process.env.EMAIL_USER}>`,
+    from: FROM,
     to: email,
     subject: `Refund Processed - Order #${order.id}`,
     html: `
@@ -188,7 +187,7 @@ exports.sendRefundConfirmation = async (email, order, amount) => {
             <div class="refund-details">
               <h3>Refund Details</h3>
               <p><strong>Order Number:</strong> #${order.id.substring(0, 8).toUpperCase()}</p>
-              <p><strong>Refund Amount:</strong> ${amount.toFixed(2)}</p>
+              <p><strong>Refund Amount:</strong> $${amount.toFixed(2)}</p>
               <p><strong>Processing Time:</strong> 5-10 business days</p>
             </div>
             
@@ -207,6 +206,66 @@ exports.sendRefundConfirmation = async (email, order, amount) => {
   try {
     await transporter.sendMail(mailOptions);
     logger.info('Refund confirmation email sent', { orderId: order.id });
+  } catch (error) {
+    logger.error('Error sending email', error);
+  }
+};
+
+exports.sendShippingNotification = async (email, order) => {
+  const mailOptions = {
+    from: FROM,
+    to: email,
+    subject: `Your order #${order.id.substring(0, 8).toUpperCase()} has shipped`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #2563eb; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .button { display: inline-block; padding: 12px 30px; background: #2563eb; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Your order is on its way!</h1>
+          </div>
+          
+          <div class="content">
+            <p>Hi ${escapeHtml(order.shippingAddress?.firstName || 'there')},</p>
+            <p>Good news: your order has shipped.</p>
+            
+            <div class="details">
+              <p><strong>Order Number:</strong> #${order.id.substring(0, 8).toUpperCase()}</p>
+              ${order.trackingNumber ? `<p><strong>Tracking Number:</strong> ${escapeHtml(order.trackingNumber)}</p>` : ''}
+              <h3>Items:</h3>
+              ${order.items.map(item => `<p>${escapeHtml(item.name)} &times; ${item.quantity}</p>`).join('')}
+              <h3>Shipping to:</h3>
+              <p>
+                ${escapeHtml(order.shippingAddress.address)}<br>
+                ${escapeHtml(order.shippingAddress.city)}, ${escapeHtml(order.shippingAddress.state)} ${escapeHtml(order.shippingAddress.zipCode)}
+              </p>
+            </div>
+            
+            <center>
+              <a href="${process.env.CLIENT_URL}/orders" class="button">View Your Orders</a>
+            </center>
+            
+            <p>Questions? Contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  };
+  
+  try {
+    await transporter.sendMail(mailOptions);
+    logger.info('Shipping notification sent', { orderId: order.id });
   } catch (error) {
     logger.error('Error sending email', error);
   }

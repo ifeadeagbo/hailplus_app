@@ -245,81 +245,89 @@ exports.clearCart = async (req, res, next) => {
   }
 };
 
-// Merge guest cart with user cart (for when user logs in)
+// Price a cart that lives in the browser (guests). Uses the same pricing
+// as logged-in carts; quantities are capped at available stock.
+exports.quoteCart = async (req, res, next) => {
+  try {
+    const { items, discountCode } = req.body;
+    
+    const products = await Product.findAll({
+      where: { id: items.map(item => item.productId), active: true },
+      attributes: ['id', 'name', 'description', 'price', 'image', 'stock', 'category']
+    });
+    const productsById = new Map(products.map(product => [product.id, product]));
+    
+    const quoted = [];
+    const unavailable = [];
+    for (const item of items) {
+      const product = productsById.get(item.productId);
+      if (!product || product.stock === 0) {
+        unavailable.push(item.productId);
+        continue;
+      }
+      quoted.push({
+        id: product.id,
+        productId: product.id,
+        quantity: Math.min(item.quantity, product.stock),
+        Product: product
+      });
+    }
+    
+    res.json({
+      items: quoted,
+      unavailable,
+      summary: summarize(quoted, discountCode),
+      discount: findDiscount(discountCode)
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Merge the guest cart into the user's cart when they log in or register.
+// Quantities are capped at available stock; unavailable products are skipped.
 exports.mergeCarts = async (req, res, next) => {
-  const transaction = await sequelize.transaction();
-  
   try {
     const { guestCartItems } = req.body;
     
-    if (!Array.isArray(guestCartItems) || guestCartItems.length === 0) {
-      return res.json({ message: 'No items to merge' });
-    }
+    const products = await Product.findAll({
+      where: { id: guestCartItems.map(item => item.productId), active: true }
+    });
+    const productsById = new Map(products.map(product => [product.id, product]));
     
-    const mergedItems = [];
+    let merged = 0;
     const failedItems = [];
     
-    for (const item of guestCartItems) {
-      try {
-        const { productId, quantity } = item;
-        
-        // Check product availability
-        const product = await Product.findByPk(productId, { transaction });
-        
-        if (!product || !product.active) {
-          failedItems.push({
-            productId,
-            reason: 'Product not available'
-          });
-          continue;
-        }
-        
-        // Check existing cart item
-        let cartItem = await Cart.findOne({
-          where: { 
-            userId: req.user.id, 
-            productId, 
-            isActive: true 
-          },
-          transaction
-        });
-        
-        if (cartItem) {
-          // Merge quantities (up to stock limit)
-          const newQuantity = Math.min(
-            cartItem.quantity + quantity,
-            product.stock
-          );
-          cartItem.quantity = newQuantity;
-          await cartItem.save({ transaction });
-        } else {
-          // Add new item
-          const addQuantity = Math.min(quantity, product.stock);
-          cartItem = await Cart.create({
-            userId: req.user.id,
-            productId,
-            quantity: addQuantity
-          }, { transaction });
-        }
-        
-        mergedItems.push(cartItem);
-      } catch (error) {
-        failedItems.push({
-          productId: item.productId,
-          reason: 'Failed to add item'
+    for (const { productId, quantity } of guestCartItems) {
+      const product = productsById.get(productId);
+      if (!product || product.stock === 0) {
+        failedItems.push({ productId, reason: 'Product not available' });
+        continue;
+      }
+      
+      const cartItem = await Cart.findOne({
+        where: { userId: req.user.id, productId, isActive: true }
+      });
+      
+      if (cartItem) {
+        cartItem.quantity = Math.min(cartItem.quantity + quantity, product.stock);
+        await cartItem.save();
+      } else {
+        await Cart.create({
+          userId: req.user.id,
+          productId,
+          quantity: Math.min(quantity, product.stock)
         });
       }
+      merged++;
     }
-    
-    await transaction.commit();
     
     res.json({
       message: 'Cart merge completed',
-      mergedItems: mergedItems.length,
+      mergedItems: merged,
       failedItems
     });
   } catch (error) {
-    await transaction.rollback();
     next(error);
   }
 };

@@ -1,5 +1,6 @@
 const { User, Product, Order } = require('../models');
 const { cancelUnpaidOrder, refundPaidOrder } = require('../utils/orderLifecycle');
+const emailService = require('../utils/emailService');
 
 // Statuses an admin can move an order to from its current status.
 // Cancellation goes through the order lifecycle so stock is restored and
@@ -102,6 +103,11 @@ exports.updateOrderStatus = async (req, res, next) => {
     order.status = status;
     if (trackingNumber) order.trackingNumber = trackingNumber;
     await order.save();
+    
+    if (status === 'shipped') {
+      const user = await order.getUser();
+      await emailService.sendShippingNotification(user.email, order);
+    }
     
     res.json(order);
   } catch (error) {

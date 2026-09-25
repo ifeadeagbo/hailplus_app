@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import LoginForm from '../components/auth/LoginForm';
 import SocialLogin from '../components/auth/SocialLogin';
 
@@ -14,6 +14,8 @@ const SOCIAL_LOGIN_ERRORS = {
 
 const LoginPage = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const checkingOut = location.state?.from?.pathname === '/checkout';
   const errorCode = searchParams.get('error');
   const socialError = errorCode && (SOCIAL_LOGIN_ERRORS[errorCode] || SOCIAL_LOGIN_ERRORS.oauth_failed);
 
@@ -26,13 +28,19 @@ const LoginPage = () => {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
-            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link to="/register" state={location.state} className="font-medium text-blue-600 hover:text-blue-500">
               create a new account
             </Link>
           </p>
         </div>
 
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {checkingOut && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-800 text-sm rounded-lg">
+              Sign in or create an account to check out. Your cart will be saved.
+            </div>
+          )}
+
           {socialError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
               {socialError}

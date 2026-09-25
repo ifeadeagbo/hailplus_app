@@ -3,9 +3,14 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import CartItem from '../components/cart/CartItem';
 import CartSummary from '../components/cart/CartSummary';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const CartPage = () => {
-  const { cartItems, clearCart } = useCart();
+  const { cartItems, clearCart, loading } = useCart();
+
+  if (loading && cartItems.length === 0) {
+    return <LoadingSpinner />;
+  }
 
   if (cartItems.length === 0) {
     return (

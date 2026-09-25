@@ -1,5 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import store from '../../config/store';
+
+const socialLinks = [
+  { name: 'Facebook', url: store.social.facebook },
+  { name: 'Twitter', url: store.social.twitter },
+  { name: 'Instagram', url: store.social.instagram }
+].filter(link => link.url);
 
 const Footer = () => {
   return (
@@ -27,8 +34,8 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/orders" className="text-gray-400 hover:text-white">
-                  Orders
+                <Link to="/account" className="text-gray-400 hover:text-white">
+                  My Account
                 </Link>
               </li>
             </ul>
@@ -38,14 +45,14 @@ const Footer = () => {
             <h3 className="text-lg font-bold mb-4">Customer Service</h3>
             <ul className="space-y-2">
               <li>
-                <a href="mailto:support@ecommerce.com" className="text-gray-400 hover:text-white">
+                <a href={`mailto:${store.supportEmail}`} className="text-gray-400 hover:text-white">
                   Contact Us
                 </a>
               </li>
               <li>
-                <a href="https://www.fedex.com/en-us/tracking.html" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
+                <Link to="/orders" className="text-gray-400 hover:text-white">
                   Track Order
-                </a>
+                </Link>
               </li>
               <li>
                 <Link to="/returns" className="text-gray-400 hover:text-white">
@@ -60,60 +67,32 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div>
-            <h3 className="text-lg font-bold mb-4">Follow Us</h3>
-            <div className="flex space-x-4">
-              <a 
-                href="https://www.facebook.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-gray-400 hover:text-white"
-              >
-                Facebook
-              </a>
-              <a 
-                href="https://www.twitter.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-gray-400 hover:text-white"
-              >
-                Twitter
-              </a>
-              <a 
-                href="https://www.instagram.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-gray-400 hover:text-white"
-              >
-                Instagram
-              </a>
+          {socialLinks.length > 0 && (
+            <div>
+              <h3 className="text-lg font-bold mb-4">Follow Us</h3>
+              <div className="flex space-x-4">
+                {socialLinks.map(link => (
+                  <a
+                    key={link.name}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white"
+                  >
+                    {link.name}
+                  </a>
+                ))}
+              </div>
             </div>
-            
-            <div className="mt-4">
-              <h4 className="text-sm font-semibold mb-2">Newsletter</h4>
-              <form className="flex">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="px-3 py-1 rounded-l text-gray-800 flex-1"
-                />
-                <button
-                  type="submit"
-                  className="bg-blue-600 px-4 py-1 rounded-r hover:bg-blue-700"
-                >
-                  Subscribe
-                </button>
-              </form>
-            </div>
-          </div>
+          )}
         </div>
 
         <div className="border-t border-gray-700 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 mb-4 md:mb-0">
-              © 2024 E-Commerce Store. All rights reserved.
+              © {new Date().getFullYear()} {store.name}. All rights reserved.
             </p>
-            
+
             <div className="flex space-x-4">
               <Link to="/privacy" className="text-gray-400 hover:text-white text-sm">
                 Privacy Policy
@@ -126,26 +105,21 @@ const Footer = () => {
               </Link>
             </div>
           </div>
-          
+
           <div className="mt-4 flex justify-center space-x-4">
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg" 
-              alt="Mastercard" 
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg"
+              alt="Mastercard"
               className="h-8"
             />
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" 
-              alt="Visa" 
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg"
+              alt="Visa"
               className="h-8"
             />
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" 
-              alt="PayPal" 
-              className="h-8"
-            />
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/a/a4/American_Express_logo_%282018%29.svg" 
-              alt="American Express" 
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/a/a4/American_Express_logo_%282018%29.svg"
+              alt="American Express"
               className="h-8"
             />
           </div>
