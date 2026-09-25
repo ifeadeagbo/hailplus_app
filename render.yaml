@@ -52,6 +52,19 @@ services:
         value: 7d
       - key: STORE_NAME
         value: Hailplus
+      - key: SUPPORT_EMAIL
+        value: hailplusinc@gmail.com
+
+      # Email (order confirmations, shipping, refunds, password resets)
+      # sent through Gmail with an app password
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USER
+        value: hailplusinc@gmail.com
+      - key: EMAIL_PASS
+        sync: false # 16-character Gmail app password, not the account password
 
       # Database: Supabase → Connect → Session pooler (works over IPv4)
       - key: DB_HOST

@@ -6,9 +6,9 @@ const store = {
   // Fill in once the business is registered, e.g. 'Hailplus Ltd'
   legalName: '',
   address: 'Aberdeen',
-  // Leave empty until you have one: the Contact link is hidden and the
-  // policy pages show a "coming soon" note
-  supportEmail: '',
+  // Shown in the footer, policy pages and emails. If emptied, the Contact
+  // link is hidden and the policy pages show a "coming soon" note
+  supportEmail: 'hailplusinc@gmail.com',
   // Governing law for the Terms, e.g. "the State of Texas, United States"
   jurisdiction: 'Scotland',
   returnWindowDays: 30,

@@ -148,10 +148,11 @@ Any host that runs Node works, with a managed PostgreSQL database.
 
 **Done:**
 - [x] Store name, address, UK currency, postcodes and consumer-law wording
+- [x] Support email: hailplusinc@gmail.com (site, policy pages and emails)
 - [x] Admin account created on first deploy from `ADMIN_EMAIL` / `ADMIN_PASSWORD` (demo accounts never exist in production)
 
 **To do:**
-- [ ] Support email address (`supportEmail` in `store.js`, `SUPPORT_EMAIL` in the backend), plus a real email provider (SMTP settings in the backend environment). Until then, order and password emails are not sent.
+- [ ] Gmail app password for hailplusinc@gmail.com in `EMAIL_PASS` (local `.env` and Render). Until then, order and password emails are not sent. Gmail allows about 500 emails a day; move to a provider such as Resend with your own domain as the store grows.
 - [ ] Replace every `[PLACEHOLDER]` in `frontend/client/src/pages/legal/`, then have the Privacy Policy, Terms and Returns policy reviewed.
 - [ ] Decide shipping prices (currently £10, free over £100) and replace the demo discount codes (`WELCOME10`, `SAVE20`, `FREESHIP`, `FLAT50`) in `pricing.js`.
 - [ ] Register with the ICO (UK data protection fee): https://ico.org.uk/for-organisations/data-protection-fee/
