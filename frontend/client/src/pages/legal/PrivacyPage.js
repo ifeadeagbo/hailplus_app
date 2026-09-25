@@ -52,8 +52,9 @@ const PrivacyPage = () => (
         You can view and update your name in <Link to="/account" className="text-blue-600 hover:underline">My Account</Link> and
         see your order history in <Link to="/orders" className="text-blue-600 hover:underline">My Orders</Link>.
         To request a copy of your data, correct it, or close your account, email <SupportEmail />.
-        Depending on where you live (for example the EU, UK or California), you may have additional rights,
-        including the right to complain to your data protection authority.
+        Under UK data protection law (UK GDPR) you also have the right to object to or restrict how we use your
+        data, and to complain to the Information Commissioner's Office
+        (<a className="text-blue-600 hover:underline" href="https://ico.org.uk/make-a-complaint/" target="_blank" rel="noopener noreferrer">ico.org.uk</a>).
       </p>
     </Section>
 

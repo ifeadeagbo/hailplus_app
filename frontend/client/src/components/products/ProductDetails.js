@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
+import { formatPrice } from '../../utils/format';
 
 const ProductDetails = ({ product }) => {
   const [quantity, setQuantity] = useState(1);
@@ -47,7 +48,7 @@ const ProductDetails = ({ product }) => {
         
         <div className="mb-6">
           <span className="text-3xl font-bold text-green-600">
-            ${parseFloat(product.price).toFixed(2)}
+            {formatPrice(product.price)}
           </span>
         </div>
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { formatPrice } from '../../utils/format';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
@@ -44,7 +45,7 @@ const ProductCard = ({ product }) => {
         
         <div className="flex items-center justify-between mt-4">
           <span className="text-2xl font-bold text-green-600">
-            ${parseFloat(product.price).toFixed(2)}
+            {formatPrice(product.price)}
           </span>
           
           <button

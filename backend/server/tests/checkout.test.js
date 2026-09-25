@@ -73,9 +73,30 @@ describe('placing an order', () => {
 
   test('validates the shipping address', async () => {
     const c = await buyerWithCart([await createProduct(), 1]);
-    const res = await c.post('/api/orders', { shippingAddress: { ...address, zipCode: 'abc' } });
+    const res = await c.post('/api/orders', { shippingAddress: { ...address, zipCode: '73301' } });
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/ZIP/);
+    expect(res.body.error).toMatch(/UK postcode/);
+  });
+
+  test('accepts UK postcodes in any common format and stores them tidied', async () => {
+    const c = await buyerWithCart([await createProduct(), 1]);
+    for (const [typed, stored] of [['ab101xg', 'AB10 1XG'], ['  SW1A  1AA ', 'SW1A 1AA'], ['M1 1AE', 'M1 1AE'], ['EC1A1BB', 'EC1A 1BB']]) {
+      const res = await c.post('/api/orders', { shippingAddress: { ...address, zipCode: typed } });
+      expect(res.status).toBe(201);
+      expect(res.body.order.shippingAddress.zipCode).toBe(stored);
+    }
+  });
+
+  test('county is optional', async () => {
+    const c = await buyerWithCart([await createProduct(), 1]);
+    const withCounty = await c.post('/api/orders', { shippingAddress: { ...address, state: 'Aberdeenshire' } });
+    expect(withCounty.status).toBe(201);
+  });
+
+  test('charges in pounds', async () => {
+    const c = await buyerWithCart([await createProduct(), 1]);
+    await placeOrder(c);
+    expect(stripe.paymentIntents.create).toHaveBeenCalledWith(expect.objectContaining({ currency: 'gbp' }), expect.anything());
   });
 
   test('explains which items are out of stock', async () => {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import orderService from '../services/orderService';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { toast } from 'react-toastify';
+import { formatPrice } from '../utils/format';
 
 const OrderHistoryPage = () => {
   const [orders, setOrders] = useState([]);
@@ -87,7 +88,7 @@ const OrderHistoryPage = () => {
                   {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                 </span>
                 <p className="mt-2 text-xl font-bold">
-                  ${parseFloat(order.totalAmount).toFixed(2)}
+                  {formatPrice(order.totalAmount)}
                 </p>
               </div>
             </div>
@@ -112,7 +113,7 @@ const OrderHistoryPage = () => {
                   {order.items.map((item, index) => (
                     <div key={index} className="flex justify-between">
                       <span>{item.name} x {item.quantity}</span>
-                      <span>${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
+                      <span>{formatPrice(parseFloat(item.price) * item.quantity)}</span>
                     </div>
                   ))}
                 </div>
@@ -122,7 +123,8 @@ const OrderHistoryPage = () => {
                   <p className="text-sm text-gray-600">
                     {order.shippingAddress.firstName} {order.shippingAddress.lastName}<br />
                     {order.shippingAddress.address}<br />
-                    {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}
+                    {[order.shippingAddress.city, order.shippingAddress.state].filter(Boolean).join(', ')}<br />
+                    {order.shippingAddress.zipCode}
                   </p>
                 </div>
               </div>

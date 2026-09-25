@@ -1,9 +1,13 @@
 // Single source of truth for cart and order totals.
 // All math is done in integer cents to avoid floating point rounding errors.
 
-const TAX_RATE = 0.1; // 10%
-const FREE_SHIPPING_THRESHOLD = 10000; // $100.00
-const FLAT_SHIPPING = 1000; // $10.00
+const CURRENCY = 'gbp';
+// No VAT: the business is not VAT registered, and a UK business must not
+// charge VAT unless it is. If you register, set this to 0.2 and make sure
+// product prices are shown VAT-inclusive (required for UK consumer sales).
+const TAX_RATE = 0;
+const FREE_SHIPPING_THRESHOLD = 10000; // £100.00
+const FLAT_SHIPPING = 1000; // £10.00
 
 // Placeholder until discount codes live in the database
 const DISCOUNT_CODES = {
@@ -56,6 +60,7 @@ const calculateTotals = (lines, discountCode) => {
 };
 
 module.exports = {
+  CURRENCY,
   calculateTotals,
   findDiscount,
   toCents,

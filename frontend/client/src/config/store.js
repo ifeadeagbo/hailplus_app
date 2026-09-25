@@ -10,13 +10,15 @@ const store = {
   // policy pages show a "coming soon" note
   supportEmail: '',
   // Governing law for the Terms, e.g. "the State of Texas, United States"
-  jurisdiction: '[STATE / COUNTRY]',
+  jurisdiction: 'Scotland',
   returnWindowDays: 30,
 
   // Shown in the FAQ; must match backend/server/utils/pricing.js
   flatShipping: 10,
   freeShippingOver: 100,
-  taxRatePercent: 10,
+  // 0 while not VAT registered. If you register, set this and TAX_RATE
+  // in pricing.js to 20, and show VAT-inclusive prices
+  taxRatePercent: 0,
   legalLastUpdated: 'September 25, 2026',
 
   // Leave empty to hide a link

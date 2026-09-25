@@ -56,14 +56,14 @@ exports.sendOrderConfirmation = async (email, order) => {
             <div class="order-details">
               <h2>Order #${order.id.substring(0, 8).toUpperCase()}</h2>
               <p><strong>Order Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</p>
-              <p><strong>Total Amount:</strong> $${parseFloat(order.totalAmount).toFixed(2)}</p>
+              <p><strong>Total Amount:</strong> £${parseFloat(order.totalAmount).toFixed(2)}</p>
               <p><strong>Status:</strong> ${order.status}</p>
               
               <h3>Order Items:</h3>
               ${order.items.map(item => `
                 <div class="item-row">
                   <strong>${escapeHtml(item.name)}</strong><br>
-                  Quantity: ${item.quantity} | Price: $${parseFloat(item.price).toFixed(2)}
+                  Quantity: ${item.quantity} | Price: £${parseFloat(item.price).toFixed(2)}
                 </div>
               `).join('')}
               
@@ -71,7 +71,8 @@ exports.sendOrderConfirmation = async (email, order) => {
               <p>
                 ${escapeHtml(order.shippingAddress.firstName)} ${escapeHtml(order.shippingAddress.lastName)}<br>
                 ${escapeHtml(order.shippingAddress.address)}<br>
-                ${escapeHtml(order.shippingAddress.city)}, ${escapeHtml(order.shippingAddress.state)} ${escapeHtml(order.shippingAddress.zipCode)}
+                ${[order.shippingAddress.city, order.shippingAddress.state].filter(Boolean).map(escapeHtml).join(', ')}<br>
+                ${escapeHtml(order.shippingAddress.zipCode)}
               </p>
             </div>
             
@@ -187,7 +188,7 @@ exports.sendRefundConfirmation = async (email, order, amount) => {
             <div class="refund-details">
               <h3>Refund Details</h3>
               <p><strong>Order Number:</strong> #${order.id.substring(0, 8).toUpperCase()}</p>
-              <p><strong>Refund Amount:</strong> $${amount.toFixed(2)}</p>
+              <p><strong>Refund Amount:</strong> £${amount.toFixed(2)}</p>
               <p><strong>Processing Time:</strong> 5-10 business days</p>
             </div>
             
@@ -247,7 +248,8 @@ exports.sendShippingNotification = async (email, order) => {
               <h3>Shipping to:</h3>
               <p>
                 ${escapeHtml(order.shippingAddress.address)}<br>
-                ${escapeHtml(order.shippingAddress.city)}, ${escapeHtml(order.shippingAddress.state)} ${escapeHtml(order.shippingAddress.zipCode)}
+                ${[order.shippingAddress.city, order.shippingAddress.state].filter(Boolean).map(escapeHtml).join(', ')}<br>
+                ${escapeHtml(order.shippingAddress.zipCode)}
               </p>
             </div>
             

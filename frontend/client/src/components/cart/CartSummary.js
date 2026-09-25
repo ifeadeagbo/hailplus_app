@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { formatPrice } from '../../utils/format';
 
 const CartSummary = () => {
   const { cartSummary, discount, applyDiscountCode, removeDiscount, validateCart } = useCart();
@@ -52,15 +53,17 @@ const CartSummary = () => {
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
           <span>Subtotal ({cartSummary.itemCount} items)</span>
-          <span>${cartSummary.subtotal}</span>
+          <span>{formatPrice(cartSummary.subtotal)}</span>
         </div>
-        <div className="flex justify-between">
-          <span>Tax</span>
-          <span>${cartSummary.tax}</span>
-        </div>
+        {parseFloat(cartSummary.tax) > 0 && (
+          <div className="flex justify-between">
+            <span>Tax</span>
+            <span>{formatPrice(cartSummary.tax)}</span>
+          </div>
+        )}
         <div className="flex justify-between">
           <span>Shipping</span>
-          <span>{parseFloat(cartSummary.shipping) === 0 ? 'Free' : `$${cartSummary.shipping}`}</span>
+          <span>{parseFloat(cartSummary.shipping) === 0 ? 'Free' : formatPrice(cartSummary.shipping)}</span>
         </div>
         {discount && (
           <div className="flex justify-between text-green-600">
@@ -70,20 +73,20 @@ const CartSummary = () => {
                 remove
               </button>
             </span>
-            <span>-${cartSummary.discountAmount}</span>
+            <span>-{formatPrice(cartSummary.discountAmount)}</span>
           </div>
         )}
       </div>
 
       {!cartSummary.freeShippingEligible && (
         <p className="text-sm text-gray-500 mt-3">
-          Add ${cartSummary.freeShippingRemaining} more for free shipping
+          Add {formatPrice(cartSummary.freeShippingRemaining)} more for free shipping
         </p>
       )}
 
       <div className="border-t mt-4 pt-4 flex justify-between font-bold text-lg">
         <span>Total</span>
-        <span>${cartSummary.total}</span>
+        <span>{formatPrice(cartSummary.total)}</span>
       </div>
 
       <form onSubmit={handleApplyDiscount} className="flex mt-4 space-x-2">

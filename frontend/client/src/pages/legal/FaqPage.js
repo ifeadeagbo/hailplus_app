@@ -2,15 +2,18 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import store from '../../config/store';
 import { InfoPage, SupportEmail } from '../../components/common/InfoPage';
+import { formatPrice } from '../../utils/format';
 
 const faqs = [
   {
     q: 'How much is shipping?',
-    a: <>Shipping is ${store.flatShipping} per order, and free on orders over ${store.freeShippingOver}.</>
+    a: <>Shipping is {formatPrice(store.flatShipping)} per order, and free on orders over {formatPrice(store.freeShippingOver)}.</>
   },
   {
-    q: 'Is tax included in prices?',
-    a: <>No. Tax ({store.taxRatePercent}%) is added at checkout and shown before you pay.</>
+    q: 'Are there any extra charges at checkout?',
+    a: store.taxRatePercent > 0
+      ? <>VAT ({store.taxRatePercent}%) and shipping are added at checkout and shown before you pay.</>
+      : <>Only shipping. The product price you see is the price you pay: no tax is added.</>
   },
   {
     q: 'Which payment methods do you accept?',
@@ -26,7 +29,7 @@ const faqs = [
   },
   {
     q: 'Can I cancel my order?',
-    a: <>Yes, from <Link to="/orders" className="text-blue-600 hover:underline">My Orders</Link>, any time before it ships. You're refunded in full automatically.</>
+    a: <>Yes, from <Link to="/orders" className="text-blue-600 hover:underline">My Orders</Link>, any time before it ships. You're refunded in full automatically. After delivery you still have 14 days to cancel under UK consumer law: see <Link to="/returns" className="text-blue-600 hover:underline">Returns & Refunds</Link>.</>
   },
   {
     q: 'How do returns work?',

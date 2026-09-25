@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCart } from '../../context/CartContext';
+import { formatPrice } from '../../utils/format';
 
 const CartItem = ({ item }) => {
   const { updateQuantity, removeFromCart } = useCart();
@@ -31,7 +32,7 @@ const CartItem = ({ item }) => {
         
         <div>
           <h3 className="font-semibold">{item.Product?.name}</h3>
-          <p className="text-gray-500 text-sm">${parseFloat(item.Product?.price).toFixed(2)}</p>
+          <p className="text-gray-500 text-sm">{formatPrice(item.Product?.price)}</p>
         </div>
       </div>
 
@@ -46,7 +47,7 @@ const CartItem = ({ item }) => {
         />
         
         <span className="font-semibold">
-          ${(parseFloat(item.Product?.price) * item.quantity).toFixed(2)}
+          {formatPrice(parseFloat(item.Product?.price) * item.quantity)}
         </span>
         
         <button

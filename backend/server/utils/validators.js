@@ -187,13 +187,18 @@ const validateOrder = [
     .trim()
     .notEmpty()
     .withMessage('City is required'),
+  // UK address: county is optional
   body('shippingAddress.state')
+    .optional({ values: 'falsy' })
+    .isString()
     .trim()
-    .notEmpty()
-    .withMessage('State is required'),
+    .isLength({ max: 100 }),
+  // UK postcode, stored uppercase with a single space: "ab101xg" -> "AB10 1XG"
   body('shippingAddress.zipCode')
-    .matches(/^\d{5}(-\d{4})?$/)
-    .withMessage('Invalid ZIP code'),
+    .trim()
+    .customSanitizer(value => String(value).toUpperCase().replace(/\s+/g, '').replace(/^(.+)(\d[A-Z]{2})$/, '$1 $2'))
+    .matches(/^[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}$/)
+    .withMessage('Enter a valid UK postcode'),
   body('discountCode')
     .optional({ values: 'falsy' })
     .isString()

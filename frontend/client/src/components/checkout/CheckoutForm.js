@@ -6,13 +6,14 @@ const fields = [
   { name: 'firstName', label: 'First Name', half: true },
   { name: 'lastName', label: 'Last Name', half: true },
   { name: 'address', label: 'Address' },
-  { name: 'city', label: 'City', half: true },
-  { name: 'state', label: 'State', half: true },
+  { name: 'city', label: 'Town / City', half: true },
+  // UK addresses: county is optional; field names match stored orders
+  { name: 'state', label: 'County (optional)', half: true, optional: true },
   {
     name: 'zipCode',
-    label: 'ZIP Code',
+    label: 'Postcode',
     half: true,
-    pattern: { value: /^\d{5}(-\d{4})?$/, message: 'Invalid ZIP code' }
+    pattern: { value: /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i, message: 'Enter a valid UK postcode' }
   }
 ];
 
@@ -33,7 +34,7 @@ const CheckoutForm = ({ onSubmit, error }) => {
               <input
                 type="text"
                 {...register(field.name, {
-                  required: `${field.label} is required`,
+                  required: !field.optional && `${field.label} is required`,
                   ...(field.pattern && { pattern: field.pattern })
                 })}
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"

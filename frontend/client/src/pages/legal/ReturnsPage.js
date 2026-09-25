@@ -12,6 +12,16 @@ const ReturnsPage = () => (
       </p>
     </Section>
 
+    <Section title="Your legal right to cancel">
+      <p>
+        Under the Consumer Contracts Regulations 2013 you can cancel most online orders within 14 days
+        of receiving them, without giving a reason, and get a full refund within 14 days of us receiving
+        the goods back (or proof you sent them). Our returns policy below is in addition to this and does
+        not affect your statutory rights, including your rights under the Consumer Rights Act 2015 for
+        faulty goods.
+      </p>
+    </Section>
+
     <Section title="Returning an item">
       <p>
         You can return most items within {store.returnWindowDays} days of delivery. Items must be unused, in their

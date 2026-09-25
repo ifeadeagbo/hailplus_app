@@ -1,27 +1,27 @@
 const { calculateTotals, findDiscount } = require('../utils/pricing');
 
 describe('calculateTotals', () => {
-  test('adds 10% tax and flat shipping under the free shipping threshold', () => {
+  test('adds flat shipping under the free shipping threshold and no tax', () => {
     const totals = calculateTotals([{ price: '14.99', quantity: 2 }]);
     expect(totals).toMatchObject({
       itemCount: 2,
       subtotal: '29.98',
       discountAmount: '0.00',
-      tax: '3.00',
+      tax: '0.00',
       shipping: '10.00',
-      total: '42.98',
+      total: '39.98',
       freeShippingEligible: false,
       freeShippingRemaining: '70.02'
     });
   });
 
-  test('ships free over $100', () => {
+  test('ships free over £100', () => {
     const totals = calculateTotals([{ price: '100.01', quantity: 1 }]);
     expect(totals.shipping).toBe('0.00');
     expect(totals.freeShippingEligible).toBe(true);
   });
 
-  test('exactly $100 still pays shipping', () => {
+  test('exactly £100 still pays shipping', () => {
     expect(calculateTotals([{ price: '100.00', quantity: 1 }]).shipping).toBe('10.00');
   });
 
@@ -29,12 +29,11 @@ describe('calculateTotals', () => {
     expect(calculateTotals([]).total).toBe('0.00');
   });
 
-  test('percentage discount applies before tax', () => {
+  test('percentage discount comes off the subtotal', () => {
     const totals = calculateTotals([{ price: '50.00', quantity: 1 }], 'welcome10');
     expect(totals.discount.code).toBe('WELCOME10');
     expect(totals.discountAmount).toBe('5.00');
-    expect(totals.tax).toBe('4.50');
-    expect(totals.total).toBe('59.50'); // 50 - 5 + 4.50 + 10 shipping
+    expect(totals.total).toBe('55.00'); // 50 - 5 + 10 shipping
   });
 
   test('fixed discount never exceeds the subtotal', () => {
@@ -52,11 +51,17 @@ describe('calculateTotals', () => {
   });
 
   test('cents stay exact where floating point would drift', () => {
-    // 0.1 + 0.2 style errors: 3 x $19.99 = $59.97 exactly
+    // 0.1 + 0.2 style errors: 3 x £19.99 = £59.97 exactly
     const totals = calculateTotals([{ price: '19.99', quantity: 3 }]);
     expect(totals.cents.subtotal).toBe(5997);
-    expect(totals.cents.total).toBe(5997 + 600 + 1000);
+    expect(totals.cents.total).toBe(5997 + 1000);
   });
+});
+
+test('charges in pounds with no VAT (business is not VAT registered)', () => {
+  const { CURRENCY } = require('../utils/pricing');
+  expect(CURRENCY).toBe('gbp');
+  expect(calculateTotals([{ price: '100.00', quantity: 3 }]).tax).toBe('0.00');
 });
 
 describe('findDiscount', () => {

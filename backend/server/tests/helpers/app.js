@@ -59,10 +59,9 @@ const loginAs = async (user, password = 'password123') => {
 const address = {
   firstName: 'Test',
   lastName: 'Buyer',
-  address: '1 Main St',
-  city: 'Austin',
-  state: 'TX',
-  zipCode: '73301'
+  address: '1 Union Street',
+  city: 'Aberdeen',
+  zipCode: 'AB10 1XG'
 };
 
 const closeAll = async () => {

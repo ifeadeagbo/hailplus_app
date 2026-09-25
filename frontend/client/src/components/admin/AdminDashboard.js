@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { formatPrice } from '../../utils/format';
 
 const AdminDashboard = () => {
   const [dashboard, setDashboard] = useState(null);
@@ -46,7 +47,7 @@ const AdminDashboard = () => {
         
         <div className="bg-yellow-500 text-white rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-2">Revenue</h3>
-          <p className="text-3xl font-bold">${dashboard?.revenue?.toFixed(2) || '0.00'}</p>
+          <p className="text-3xl font-bold">{formatPrice(dashboard?.revenue)}</p>
         </div>
       </div>
       
@@ -83,7 +84,7 @@ const AdminDashboard = () => {
                     {order.User?.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    ${parseFloat(order.totalAmount).toFixed(2)}
+                    {formatPrice(order.totalAmount)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 

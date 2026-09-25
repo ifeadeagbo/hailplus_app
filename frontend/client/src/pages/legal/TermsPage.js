@@ -20,7 +20,7 @@ const TermsPage = () => (
 
     <Section title="Orders and prices">
       <p>
-        Prices are shown in US dollars. Tax and shipping are added at checkout and shown before you pay.
+        Prices are in pounds sterling (GBP). Shipping is added at checkout and shown before you pay.
         Your order is accepted when payment succeeds and we send an order confirmation email.
       </p>
       <p>

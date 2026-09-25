@@ -97,7 +97,9 @@ Build with `REACT_APP_API_URL` and `REACT_APP_STRIPE_PUBLIC_KEY` (they are baked
 - [ ] Fill in `frontend/client/src/config/store.js` (store name, business name, address, support email, jurisdiction, social links).
 - [ ] Replace every `[PLACEHOLDER]` in `frontend/client/src/pages/legal/` and have the Privacy Policy, Terms and Returns policy reviewed for your business and country.
 - [ ] Set `STORE_NAME` and `SUPPORT_EMAIL` in the backend environment (used in emails) and configure a real SMTP provider.
-- [ ] Replace the hard-coded discount codes and 10% flat tax in `backend/server/utils/pricing.js` with your real discounts and a tax calculation for the places you sell to (e.g. Stripe Tax), and update the FAQ numbers in `store.js`.
+- [ ] Replace the hard-coded discount codes in `backend/server/utils/pricing.js` with your real ones.
+- [ ] Prices are in GBP with no VAT (the business is not VAT registered). If you register for VAT, set `TAX_RATE` in `pricing.js` and `taxRatePercent` in `store.js`, and show VAT-inclusive prices. Review the £10 / free-over-£100 shipping in the same two files.
+- [ ] Register with the ICO (UK data protection fee) before collecting customer data: https://ico.org.uk/for-organisations/data-protection-fee/
 - [ ] Switch Stripe to live keys and register the production webhook (see Deploying).
 - [ ] Create a real admin account and remove the seeded demo users.
 - [ ] If you add analytics or marketing scripts, add a cookie consent banner and list them on the Cookie Policy page.

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import productService from '../../services/productService';
 import { toast } from 'react-toastify';
+import { formatPrice } from '../../utils/format';
 
 const ProductManager = () => {
   const [products, setProducts] = useState([]);
@@ -231,7 +232,7 @@ const ProductManager = () => {
               <tr key={product.id}>
                 <td className="px-6 py-4 whitespace-nowrap">{product.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{product.category}</td>
-                <td className="px-6 py-4 whitespace-nowrap">${parseFloat(product.price).toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatPrice(product.price)}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{product.stock}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 

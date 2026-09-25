@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import productService from '../services/productService';
 import ProductDetails from '../components/products/ProductDetails';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { formatPrice } from '../utils/format';
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -88,7 +89,7 @@ const ProductDetailsPage = () => {
                   onError={handleImageError}
                 />
                 <h3 className="font-semibold">{p.name}</h3>
-                <p className="text-green-600 font-bold">${parseFloat(p.price).toFixed(2)}</p>
+                <p className="text-green-600 font-bold">{formatPrice(p.price)}</p>
               </div>
             ))}
           </div>

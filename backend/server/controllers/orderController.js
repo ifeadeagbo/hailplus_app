@@ -1,6 +1,6 @@
 const { sequelize, Order, Cart, Product } = require('../models');
 const stripe = require('../config/stripe');
-const { calculateTotals, findDiscount } = require('../utils/pricing');
+const { CURRENCY, calculateTotals, findDiscount } = require('../utils/pricing');
 const {
   markOrderPaid,
   cancelUnpaidOrder,
@@ -100,7 +100,7 @@ exports.createOrder = async (req, res, next) => {
       // stock reservation are rolled back
       const paymentIntent = await stripe.paymentIntents.create({
         amount: totals.cents.total,
-        currency: 'usd',
+        currency: CURRENCY,
         payment_method_types: ['card'],
         receipt_email: req.user.email,
         metadata: {

@@ -6,6 +6,7 @@ import CheckoutForm from '../components/checkout/CheckoutForm';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import orderService from '../services/orderService';
 import { toast } from 'react-toastify';
+import { formatPrice } from '../utils/format';
 
 const CheckoutPage = () => {
   const { cartItems, cartSummary, discount, loading, fetchCart } = useCart();
@@ -42,8 +43,9 @@ const CheckoutPage = () => {
             address: {
               line1: shipping.address,
               city: shipping.city,
-              state: shipping.state,
-              postal_code: shipping.zipCode
+              ...(shipping.state && { state: shipping.state }),
+              postal_code: shipping.zipCode,
+              country: 'GB'
             }
           }
         }
@@ -105,7 +107,7 @@ const CheckoutPage = () => {
               {cartItems.map(item => (
                 <div key={item.id} className="flex justify-between text-sm">
                   <span>{item.Product?.name} x {item.quantity}</span>
-                  <span>${(parseFloat(item.Product?.price) * item.quantity).toFixed(2)}</span>
+                  <span>{formatPrice(parseFloat(item.Product?.price) * item.quantity)}</span>
                 </div>
               ))}
             </div>
@@ -114,25 +116,27 @@ const CheckoutPage = () => {
               <div className="border-t pt-4 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>${cartSummary.subtotal}</span>
+                  <span>{formatPrice(cartSummary.subtotal)}</span>
                 </div>
                 {discount && (
                   <div className="flex justify-between text-green-600">
                     <span>Discount ({discount.code})</span>
-                    <span>-${cartSummary.discountAmount}</span>
+                    <span>-{formatPrice(cartSummary.discountAmount)}</span>
+                  </div>
+                )}
+                {parseFloat(cartSummary.tax) > 0 && (
+                  <div className="flex justify-between">
+                    <span>Tax</span>
+                    <span>{formatPrice(cartSummary.tax)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Tax</span>
-                  <span>${cartSummary.tax}</span>
-                </div>
-                <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span>{parseFloat(cartSummary.shipping) === 0 ? 'Free' : `$${cartSummary.shipping}`}</span>
+                  <span>{parseFloat(cartSummary.shipping) === 0 ? 'Free' : formatPrice(cartSummary.shipping)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total</span>
-                  <span>${cartSummary.total}</span>
+                  <span>{formatPrice(cartSummary.total)}</span>
                 </div>
               </div>
             )}
