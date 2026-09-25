@@ -1,22 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import productService from '../services/productService';
 import ProductList from '../components/products/ProductList';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import store from '../config/store';
+
+const PAGE_SIZE = 12;
+
+const sortOptions = [
+  { value: '', label: 'Newest' },
+  { value: 'price_asc', label: 'Price: low to high' },
+  { value: 'price_desc', label: 'Price: high to low' },
+  { value: 'name', label: 'Name: A to Z' }
+];
 
 const ProductsPage = () => {
+  // The URL is the source of truth, so header links and search work from any page
   const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [totalPages, setTotalPages] = useState(0);
-  const [filters, setFilters] = useState({
-    category: searchParams.get('category') || '',
-    search: searchParams.get('search') || '',
-    sort: searchParams.get('sort') || '',
-    page: parseInt(searchParams.get('page') || '1')
-  });
+  const category = searchParams.get('category') || '';
+  const search = searchParams.get('search') || '';
+  const sort = searchParams.get('sort') || '';
+  const page = Math.max(parseInt(searchParams.get('page') || '1'), 1);
 
-  const categories = ['Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports'];
+  const [products, setProducts] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Ignore responses that arrive after the filters changed again
@@ -25,9 +33,10 @@ const ProductsPage = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await productService.getAllProducts(filters);
+        const response = await productService.getAllProducts({ category, search, sort, page, limit: PAGE_SIZE });
         if (stale) return;
         setProducts(response.products);
+        setTotal(response.total);
         setTotalPages(response.totalPages);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -38,146 +47,129 @@ const ProductsPage = () => {
 
     fetchProducts();
     return () => { stale = true; };
-  }, [filters]);
+  }, [category, search, sort, page]);
 
-  const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value, page: 1 };
-    setFilters(newFilters);
-    
-    const params = new URLSearchParams();
-    Object.entries(newFilters).forEach(([k, v]) => {
-      if (v) params.set(k, v.toString());
+  const updateParams = (changes) => {
+    const params = new URLSearchParams(searchParams);
+    Object.entries(changes).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+      else params.delete(key);
     });
+    if (!('page' in changes)) params.delete('page');
     setSearchParams(params);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    handleFilterChange('search', e.target.search.value);
+    updateParams({ search: e.target.search.value.trim() });
   };
 
-  const handlePageChange = (newPage) => {
-    const newFilters = { ...filters, page: newPage };
-    setFilters(newFilters);
-    
-    const params = new URLSearchParams(searchParams);
-    params.set('page', newPage.toString());
-    setSearchParams(params);
-  };
+  const title = search ? `Results for “${search}”` : category || 'Shop';
+  const first = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const last = Math.min(page * PAGE_SIZE, total);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">All Products</h1>
-      
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Filters Sidebar */}
-        <div className="lg:w-1/4">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Filters</h2>
-            
-            {/* Search */}
-            <form onSubmit={handleSearch} className="mb-6">
-              <input
-                type="text"
-                name="search"
-                placeholder="Search products..."
-                defaultValue={filters.search}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-              />
-              <button
-                type="submit"
-                className="mt-2 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-              >
-                Search
+    <div>
+      <div className="bg-cream py-12 text-center">
+        <nav className="text-[11px] uppercase tracking-label text-muted mb-3">
+          <Link to="/" className="hover:text-ink">Home</Link>
+          <span className="mx-2">/</span>
+          <Link to="/products" className="hover:text-ink">Shop</Link>
+          {category && (<><span className="mx-2">/</span><span className="text-ink">{category}</span></>)}
+        </nav>
+        <h1 className="section-title">{title}</h1>
+      </div>
+
+      <div className="shop-container py-12 flex flex-col lg:flex-row gap-10">
+        <aside className="lg:w-60 shrink-0 space-y-10">
+          <form onSubmit={handleSearch} key={search}>
+            <h2 className="text-xs font-semibold uppercase tracking-label mb-4">Search</h2>
+            <div className="flex">
+              <input name="search" type="search" defaultValue={search} placeholder="Search products..." className="field" />
+              <button type="submit" aria-label="Search" className="px-4 bg-ink text-white hover:bg-accent">
+                <i className="fa-solid fa-magnifying-glass text-sm"></i>
               </button>
-            </form>
-            
-            {/* Categories */}
-            <div className="mb-6">
-              <h3 className="font-semibold mb-2">Category</h3>
+            </div>
+          </form>
+
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-label mb-4">Categories</h2>
+            <ul className="space-y-1 text-sm">
+              {['', ...store.categories].map(name => (
+                <li key={name || 'all'}>
+                  <button
+                    onClick={() => updateParams({ category: name })}
+                    className={`w-full text-left py-1.5 transition-colors ${
+                      category === name ? 'text-accent font-medium' : 'text-ink/80 hover:text-accent'
+                    }`}
+                  >
+                    {name || 'All products'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {(category || search || sort) && (
+            <button
+              onClick={() => setSearchParams(new URLSearchParams())}
+              className="text-xs uppercase tracking-label border-b border-ink pb-0.5 hover:text-accent hover:border-accent"
+            >
+              Clear all filters
+            </button>
+          )}
+        </aside>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 mb-8 border-b border-line">
+            <p className="text-sm text-muted">
+              {loading ? 'Loading...' : `Showing ${first}–${last} of ${total} products`}
+            </p>
+            <label className="flex items-center gap-3 text-sm">
+              <span className="text-muted">Sort by</span>
               <select
-                value={filters.category}
-                onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                value={sort}
+                onChange={(e) => updateParams({ sort: e.target.value })}
+                className="border border-line px-3 py-2 text-sm focus:outline-none focus:border-ink bg-white"
               >
-                <option value="">All Categories</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                {sortOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
-            </div>
-            
-            {/* Sort */}
-            <div className="mb-6">
-              <h3 className="font-semibold mb-2">Sort By</h3>
-              <select
-                value={filters.sort}
-                onChange={(e) => handleFilterChange('sort', e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-              >
-                <option value="">Default</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
-                <option value="name">Name: A to Z</option>
-              </select>
-            </div>
-            
-            {/* Clear Filters */}
-            <button
-              onClick={() => {
-                setFilters({ category: '', search: '', sort: '', page: 1 });
-                setSearchParams(new URLSearchParams());
-              }}
-              className="w-full bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300"
-            >
-              Clear Filters
-            </button>
+            </label>
           </div>
-        </div>
-        
-        {/* Products Grid */}
-        <div className="lg:w-3/4">
-          {loading ? (
-            <LoadingSpinner />
-          ) : (
-            <>
-              <ProductList products={products} loading={loading} />
-              
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="mt-8 flex justify-center space-x-2">
-                  <button
-                    onClick={() => handlePageChange(filters.page - 1)}
-                    disabled={filters.page === 1}
-                    className="px-4 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  
-                  {[...Array(totalPages)].map((_, i) => (
-                    <button
-                      key={i + 1}
-                      onClick={() => handlePageChange(i + 1)}
-                      className={`px-4 py-2 border rounded-lg ${
-                        filters.page === i + 1
-                          ? 'bg-blue-600 text-white'
-                          : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                  
-                  <button
-                    onClick={() => handlePageChange(filters.page + 1)}
-                    disabled={filters.page === totalPages}
-                    className="px-4 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
+
+          <ProductList products={products} loading={loading} columns="grid-cols-2 lg:grid-cols-3" />
+
+          {totalPages > 1 && (
+            <nav className="mt-14 flex justify-center gap-2">
+              <button
+                onClick={() => updateParams({ page: String(page - 1) })}
+                disabled={page === 1}
+                aria-label="Previous page"
+                className="h-10 w-10 border border-line hover:border-ink disabled:opacity-30 disabled:hover:border-line"
+              >
+                <i className="fa-solid fa-chevron-left text-xs"></i>
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                <button
+                  key={n}
+                  onClick={() => updateParams({ page: String(n) })}
+                  className={`h-10 w-10 text-sm border ${n === page ? 'bg-ink text-white border-ink' : 'border-line hover:border-ink'}`}
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                onClick={() => updateParams({ page: String(page + 1) })}
+                disabled={page === totalPages}
+                aria-label="Next page"
+                className="h-10 w-10 border border-line hover:border-ink disabled:opacity-30 disabled:hover:border-line"
+              >
+                <i className="fa-solid fa-chevron-right text-xs"></i>
+              </button>
+            </nav>
           )}
         </div>
       </div>

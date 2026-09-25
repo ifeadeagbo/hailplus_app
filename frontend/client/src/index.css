@@ -2,8 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  body {
+    @apply bg-white text-ink font-sans antialiased;
+  }
+
+  h1, h2, h3 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .shop-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Small uppercase label above section titles */
+  .eyebrow {
+    @apply text-[11px] font-medium uppercase tracking-label text-accent;
+  }
+
+  .section-title {
+    @apply font-display text-2xl sm:text-3xl font-normal uppercase tracking-[0.12em] text-ink;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center px-8 py-3.5 text-xs font-semibold uppercase tracking-label
+      transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-dark {
+    @apply btn bg-ink text-white hover:bg-accent;
+  }
+
+  .btn-outline {
+    @apply btn border border-ink text-ink hover:bg-ink hover:text-white;
+  }
+
+  .btn-light {
+    @apply btn bg-white text-ink hover:bg-ink hover:text-white;
+  }
+
+  .field {
+    @apply w-full border border-line px-4 py-3 text-sm focus:outline-none focus:border-ink;
+  }
+
+  /* Thin border inset inside a banner image */
+  .inset-stroke {
+    @apply pointer-events-none absolute inset-4 border border-white/70;
+  }
 }

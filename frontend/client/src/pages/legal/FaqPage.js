@@ -2,12 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import store from '../../config/store';
 import { InfoPage, SupportEmail } from '../../components/common/InfoPage';
-import { formatPrice } from '../../utils/format';
+import { formatShortPrice } from '../../utils/format';
 
 const faqs = [
   {
     q: 'How much is shipping?',
-    a: <>Shipping is {formatPrice(store.flatShipping)} per order, and free on orders over {formatPrice(store.freeShippingOver)}.</>
+    a: <>Shipping is {formatShortPrice(store.flatShipping)} per order, and free on orders over {formatShortPrice(store.freeShippingOver)}.</>
   },
   {
     q: 'Are there any extra charges at checkout?',

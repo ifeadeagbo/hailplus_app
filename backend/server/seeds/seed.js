@@ -240,7 +240,7 @@ const seedProducts = async () => {
       category: 'Home & Garden',
       stock: 40,
       featured: false,
-      image: 'https://images.unsplash.com/photo-1565636192335-f737bf367cf1?w=500&h=500&fit=crop'
+      image: 'https://images.unsplash.com/photo-1532007271951-c487760934ae?w=500&h=500&fit=crop'
     },
     {
       name: 'Modern Coffee Table',
@@ -249,7 +249,7 @@ const seedProducts = async () => {
       category: 'Home & Garden',
       stock: 8,
       featured: true,
-      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=500&fit=crop'
+      image: 'https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=500&h=500&fit=crop'
     },
     
     // Sports

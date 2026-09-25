@@ -100,7 +100,8 @@ function App() {
                 </ErrorBoundary>
               </main>
               <Footer />
-              <ToastContainer />
+              {/* Bottom-right so notices never cover the header's cart and account icons */}
+              <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar />
             </div>
           </CartProvider>
         </AuthProvider>
