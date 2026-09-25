@@ -19,7 +19,7 @@ module.exports = {
           DEFAULT: '#8c6a17',
           light: '#f7f0dd'
         },
-        gold: '#d4a73a',
+        gold: '#d4af37',
         charcoal: '#2e2e2e',
         // Older pages use Tailwind's blue for buttons and links; remapping it
         // gives them the store's near-black primary without editing each page
