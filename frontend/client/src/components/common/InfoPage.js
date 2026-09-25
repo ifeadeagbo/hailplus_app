@@ -19,8 +19,11 @@ export const Section = ({ title, children }) => (
   </section>
 );
 
-export const SupportEmail = () => (
-  <a href={`mailto:${store.supportEmail}`} className="text-blue-600 hover:underline">
-    {store.supportEmail}
-  </a>
-);
+export const SupportEmail = () =>
+  store.supportEmail ? (
+    <a href={`mailto:${store.supportEmail}`} className="text-blue-600 hover:underline">
+      {store.supportEmail}
+    </a>
+  ) : (
+    <span className="bg-yellow-100 px-1">[support email coming soon]</span>
+  );

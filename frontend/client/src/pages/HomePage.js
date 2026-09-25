@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import productService from '../services/productService';
 import ProductList from '../components/products/ProductList';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import store from '../config/store';
 
 const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -36,7 +37,7 @@ const HomePage = () => {
         }}
       >
         <div className="max-w-3xl relative z-10">
-          <h1 className="text-5xl font-bold mb-4">Welcome to E-Commerce Store</h1>
+          <h1 className="text-5xl font-bold mb-4">Welcome to {store.name}</h1>
           <p className="text-xl mb-8">
             Discover amazing products at unbeatable prices. Shop with confidence and enjoy fast delivery.
           </p>

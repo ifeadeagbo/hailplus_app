@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import store from '../../config/store';
+import store, { businessName } from '../../config/store';
 import { InfoPage, Section, SupportEmail } from '../../components/common/InfoPage';
 
 const PrivacyPage = () => (
   <InfoPage title="Privacy Policy">
     <p>
-      This policy explains what personal information {store.legalName} ("{store.name}", "we") collects when
+      This policy explains what personal information {businessName} ("we") collects when
       you use this website, why, and the choices you have. Contact us at <SupportEmail /> or {store.address}.
     </p>
 

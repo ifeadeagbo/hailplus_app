@@ -1,13 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import store from '../../config/store';
+import store, { businessName } from '../../config/store';
 import { InfoPage, Section, SupportEmail } from '../../components/common/InfoPage';
 
 const TermsPage = () => (
   <InfoPage title="Terms of Service">
     <p>
-      These terms apply to your use of this website and any purchase you make from {store.legalName}
-      ("{store.name}", "we"), {store.address}. By placing an order you agree to them.
+      These terms apply to your use of this website and any purchase you make
+      from {businessName} ("we"), {store.address}. By placing an order you agree to them.
     </p>
 
     <Section title="Your account">

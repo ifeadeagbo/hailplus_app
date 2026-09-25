@@ -2,10 +2,13 @@
 // Replace every value in [BRACKETS] before launch. The legal pages are
 // starting-point drafts: have them reviewed for your business and country.
 const store = {
-  name: '[YOUR STORE NAME]',
-  legalName: '[REGISTERED BUSINESS NAME]',
-  address: '[BUSINESS ADDRESS]',
-  supportEmail: '[support@yourdomain.com]',
+  name: 'Hailplus',
+  // Fill in once the business is registered, e.g. 'Hailplus Ltd'
+  legalName: '',
+  address: 'Aberdeen',
+  // Leave empty until you have one: the Contact link is hidden and the
+  // policy pages show a "coming soon" note
+  supportEmail: '',
   // Governing law for the Terms, e.g. "the State of Texas, United States"
   jurisdiction: '[STATE / COUNTRY]',
   returnWindowDays: 30,
@@ -23,5 +26,10 @@ const store = {
     twitter: ''
   }
 };
+
+// How the business is named in the policy pages
+export const businessName = store.legalName
+  ? `${store.legalName} (trading as ${store.name})`
+  : store.name;
 
 export default store;
