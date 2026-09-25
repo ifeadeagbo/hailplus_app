@@ -1,5 +1,11 @@
 const nodemailer = require('nodemailer');
 
+// Escapes user-supplied text (names, addresses) before it goes into email HTML
+const escapeHtml = (value) =>
+  String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
+
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: process.env.EMAIL_PORT,
@@ -39,7 +45,7 @@ exports.sendOrderConfirmation = async (email, order) => {
           </div>
           
           <div class="content">
-            <p>Hi ${order.shippingAddress?.firstName || 'Valued Customer'},</p>
+            <p>Hi ${escapeHtml(order.shippingAddress?.firstName || 'Valued Customer')},</p>
             <p>We've received your order and will begin processing it soon.</p>
             
             <div class="order-details">
@@ -51,16 +57,16 @@ exports.sendOrderConfirmation = async (email, order) => {
               <h3>Order Items:</h3>
               ${order.items.map(item => `
                 <div class="item-row">
-                  <strong>${item.name}</strong><br>
+                  <strong>${escapeHtml(item.name)}</strong><br>
                   Quantity: ${item.quantity} | Price: ${parseFloat(item.price).toFixed(2)}
                 </div>
               `).join('')}
               
               <h3>Shipping Address:</h3>
               <p>
-                ${order.shippingAddress.firstName} ${order.shippingAddress.lastName}<br>
-                ${order.shippingAddress.address}<br>
-                ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.zipCode}
+                ${escapeHtml(order.shippingAddress.firstName)} ${escapeHtml(order.shippingAddress.lastName)}<br>
+                ${escapeHtml(order.shippingAddress.address)}<br>
+                ${escapeHtml(order.shippingAddress.city)}, ${escapeHtml(order.shippingAddress.state)} ${escapeHtml(order.shippingAddress.zipCode)}
               </p>
             </div>
             

@@ -1,5 +1,20 @@
 const { User, Product, Order } = require('../models');
-const { Op } = require('sequelize');
+const { cancelUnpaidOrder, refundPaidOrder } = require('../utils/orderLifecycle');
+
+// Statuses an admin can move an order to from its current status.
+// Cancellation goes through the order lifecycle so stock is restored and
+// paid orders are refunded.
+const ALLOWED_TRANSITIONS = {
+  pending: ['cancelled'],
+  processing: ['shipped', 'delivered', 'cancelled'],
+  shipped: ['delivered']
+};
+
+const pagination = (query) => {
+  const page = Math.max(parseInt(query.page) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(query.limit) || 20, 1), 100);
+  return { page, limit, offset: (page - 1) * limit };
+};
 
 exports.getDashboard = async (req, res, next) => {
   try {
@@ -31,16 +46,15 @@ exports.getDashboard = async (req, res, next) => {
 
 exports.getAllOrders = async (req, res, next) => {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
+    const { status } = req.query;
+    const { page, limit, offset } = pagination(req.query);
     const where = {};
     
     if (status) where.status = status;
     
-    const offset = (page - 1) * limit;
-    
     const { count, rows } = await Order.findAndCountAll({
       where,
-      limit: parseInt(limit),
+      limit,
       offset,
       order: [['createdAt', 'DESC']],
       include: [{ model: User, attributes: ['id', 'name', 'email'] }]
@@ -49,7 +63,7 @@ exports.getAllOrders = async (req, res, next) => {
     res.json({
       orders: rows,
       total: count,
-      page: parseInt(page),
+      page,
       totalPages: Math.ceil(count / limit)
     });
   } catch (error) {
@@ -68,6 +82,23 @@ exports.updateOrderStatus = async (req, res, next) => {
       return res.status(404).json({ error: 'Order not found' });
     }
     
+    if (!(ALLOWED_TRANSITIONS[order.status] || []).includes(status)) {
+      return res.status(400).json({ error: `Cannot change a ${order.status} order to ${status}` });
+    }
+    
+    if (status === 'cancelled') {
+      if (order.status === 'pending') {
+        await cancelUnpaidOrder(order);
+      } else {
+        await refundPaidOrder(order);
+      }
+      await order.reload();
+      if (order.status !== 'cancelled') {
+        return res.status(409).json({ error: 'Order status changed, please refresh and try again' });
+      }
+      return res.json(order);
+    }
+    
     order.status = status;
     if (trackingNumber) order.trackingNumber = trackingNumber;
     await order.save();
@@ -80,17 +111,16 @@ exports.updateOrderStatus = async (req, res, next) => {
 
 exports.getAllUsers = async (req, res, next) => {
   try {
-    const { role, page = 1, limit = 20 } = req.query;
+    const { role } = req.query;
+    const { page, limit, offset } = pagination(req.query);
     const where = {};
     
     if (role) where.role = role;
     
-    const offset = (page - 1) * limit;
-    
     const { count, rows } = await User.findAndCountAll({
       where,
-      attributes: { exclude: ['password'] },
-      limit: parseInt(limit),
+      attributes: { exclude: ['password', 'resetPasswordToken', 'resetPasswordExpires', 'tokenVersion'] },
+      limit,
       offset,
       order: [['createdAt', 'DESC']]
     });
@@ -98,7 +128,7 @@ exports.getAllUsers = async (req, res, next) => {
     res.json({
       users: rows,
       total: count,
-      page: parseInt(page),
+      page,
       totalPages: Math.ceil(count / limit)
     });
   } catch (error) {

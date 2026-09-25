@@ -19,18 +19,22 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Tokens used to be kept here; the session now lives in an httpOnly cookie
+    localStorage.removeItem('token');
     checkAuth();
+
+    const handleUnauthorized = () => setUser(null);
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
+  // The auth cookie is sent automatically; the profile call tells us who it belongs to
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        const userData = await authService.getProfile();
-        setUser(userData);
-      }
+      const userData = await authService.getProfile();
+      setUser(userData);
     } catch (error) {
-      localStorage.removeItem('token');
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -39,7 +43,6 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await authService.login(email, password);
-      localStorage.setItem('token', response.token);
       setUser(response.user);
       toast.success('Login successful!');
       navigate('/');
@@ -53,7 +56,6 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await authService.register(userData);
-      localStorage.setItem('token', response.token);
       setUser(response.user);
       toast.success('Registration successful!');
       navigate('/');
@@ -67,12 +69,12 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await authService.logout();
-      localStorage.removeItem('token');
-      setUser(null);
       toast.success('Logged out successfully');
-      navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+      navigate('/login');
     }
   };
 

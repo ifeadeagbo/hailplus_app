@@ -60,8 +60,12 @@ const RegisterForm = () => {
           {...register('password', { 
             required: 'Password is required',
             minLength: {
-              value: 6,
-              message: 'Password must be at least 6 characters'
+              value: 8,
+              message: 'Password must be at least 8 characters'
+            },
+            validate: {
+              hasNumber: value => /\d/.test(value) || 'Password must contain at least one number',
+              hasLetter: value => /[a-zA-Z]/.test(value) || 'Password must contain at least one letter'
             }
           })}
           className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"

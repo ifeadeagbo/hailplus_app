@@ -4,10 +4,16 @@ const { sanitizeUser } = require('../utils/helpers');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const emailService = require('../utils/emailService');
+const { issueAuthCookie } = require('../utils/authCookie');
+
+// Fields an admin may change on another user's account
+const ADMIN_EDITABLE_FIELDS = ['name', 'active'];
 
 exports.getUsers = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, role, search } = req.query;
+    const { role, search } = req.query;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
     const offset = (page - 1) * limit;
     
     const where = {};
@@ -21,8 +27,8 @@ exports.getUsers = async (req, res, next) => {
     
     const { count, rows } = await User.findAndCountAll({
       where,
-      attributes: { exclude: ['password', 'resetPasswordToken'] },
-      limit: parseInt(limit),
+      attributes: { exclude: ['password', 'resetPasswordToken', 'resetPasswordExpires', 'tokenVersion'] },
+      limit,
       offset,
       order: [['createdAt', 'DESC']]
     });
@@ -30,7 +36,7 @@ exports.getUsers = async (req, res, next) => {
     res.json({
       users: rows,
       total: count,
-      page: parseInt(page),
+      page,
       totalPages: Math.ceil(count / limit)
     });
   } catch (error) {
@@ -41,7 +47,7 @@ exports.getUsers = async (req, res, next) => {
 exports.getUserById = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.params.id, {
-      attributes: { exclude: ['password', 'resetPasswordToken'] },
+      attributes: { exclude: ['password', 'resetPasswordToken', 'resetPasswordExpires', 'tokenVersion'] },
       include: [
         {
           model: Order,
@@ -65,12 +71,9 @@ exports.getUserById = async (req, res, next) => {
 exports.updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
-    
-    // Prevent updating sensitive fields
-    delete updates.password;
-    delete updates.role;
-    delete updates.stripeCustomerId;
+    const updates = Object.fromEntries(
+      ADMIN_EDITABLE_FIELDS.filter(field => req.body[field] !== undefined).map(field => [field, req.body[field]])
+    );
     
     const user = await User.findByPk(id);
     
@@ -103,8 +106,8 @@ exports.deleteUser = async (req, res, next) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Soft delete - just deactivate the account
-    await user.update({ active: false });
+    // Soft delete - deactivate the account and sign it out everywhere
+    await user.update({ active: false, tokenVersion: user.tokenVersion + 1 });
     
     res.json({ message: 'User account deactivated' });
   } catch (error) {
@@ -118,15 +121,23 @@ exports.changePassword = async (req, res, next) => {
     
     const user = await User.findByPk(req.user.id);
     
+    if (!user.password) {
+      return res.status(400).json({ error: `Your account uses ${user.provider} sign-in and has no password` });
+    }
+    
     // Verify current password
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
     
-    // Update password
+    // Update password and sign out other devices
     user.password = newPassword; // Will be hashed by model hook
+    user.tokenVersion += 1;
     await user.save();
+    
+    // Keep this browser signed in with a fresh token
+    issueAuthCookie(res, user);
     
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
@@ -187,6 +198,7 @@ exports.resetPassword = async (req, res, next) => {
     user.password = password;
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
+    user.tokenVersion += 1; // Sign out every existing session
     await user.save();
     
     res.json({ message: 'Password has been reset successfully' });
@@ -202,6 +214,10 @@ exports.updateUserRole = async (req, res, next) => {
     
     if (!['customer', 'admin'].includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
+    }
+    
+    if (id === req.user.id) {
+      return res.status(400).json({ error: 'You cannot change your own role' });
     }
     
     const user = await User.findByPk(id);

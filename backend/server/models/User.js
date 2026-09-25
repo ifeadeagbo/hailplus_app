@@ -51,6 +51,11 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   },
+  tokenVersion: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  },
   emailVerified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false

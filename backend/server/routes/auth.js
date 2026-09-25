@@ -1,53 +1,53 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
-const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
-
-// Validation rules
-const registerValidation = [
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 }),
-  body('name').trim().notEmpty()
-];
-
-const loginValidation = [
-  body('email').isEmail().normalizeEmail(),
-  body('password').notEmpty()
-];
+const { authLimiter } = require('../middleware/rateLimiter');
+const { validateRegister, validateLogin, validateProfile } = require('../utils/validators');
+const { enabledProviders } = require('../config/passport');
 
 // Local auth routes
-router.post('/register', registerValidation, authController.register);
-router.post('/login', loginValidation, authController.login);
+router.post('/register', authLimiter, validateRegister, authController.register);
+router.post('/login', authLimiter, validateLogin, authController.login);
 router.post('/logout', authController.logout);
 
 // Profile routes
 router.get('/profile', authenticate, authController.getProfile);
-router.put('/profile', authenticate, authController.updateProfile);
+router.put('/profile', authenticate, validateProfile, authController.updateProfile);
 
-// Google OAuth
-router.get('/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+// Which social login buttons the frontend should show
+router.get('/providers', (req, res) => {
+  res.json({ providers: enabledProviders });
+});
 
-router.get('/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
-  }
-);
+// Social login. The session only holds the OAuth "state" value during the
+// redirect; the logged-in user is carried by the auth cookie.
+const socialLogin = (provider, scope) => {
+  const loginFailed = (reason) => `${process.env.CLIENT_URL}/login?error=${reason}`;
 
-// Facebook OAuth
-router.get('/facebook',
-  passport.authenticate('facebook', { scope: ['email'] })
-);
+  router.get(`/${provider}`, (req, res, next) => {
+    if (!enabledProviders.includes(provider)) {
+      return res.redirect(loginFailed('provider_unavailable'));
+    }
+    passport.authenticate(provider, { scope, session: false })(req, res, next);
+  });
 
-router.get('/facebook/callback',
-  passport.authenticate('facebook', { failureRedirect: '/login' }),
-  (req, res) => {
-    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
-  }
-);
+  router.get(`/${provider}/callback`, (req, res, next) => {
+    if (!enabledProviders.includes(provider)) {
+      return res.redirect(loginFailed('provider_unavailable'));
+    }
+    passport.authenticate(provider, { session: false }, (error, user, info) => {
+      if (error || !user) {
+        return res.redirect(loginFailed(info?.message || 'oauth_failed'));
+      }
+      req.user = user;
+      authController.oauthSuccess(req, res);
+    })(req, res, next);
+  });
+};
+
+socialLogin('google', ['profile', 'email']);
+socialLogin('facebook', ['email']);
 
 module.exports = router;

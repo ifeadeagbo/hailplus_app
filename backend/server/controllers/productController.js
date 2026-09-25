@@ -1,9 +1,17 @@
 const { Product } = require('../models');
 const { Op } = require('sequelize');
 
+// Fields an admin may set; anything else in the request body is ignored
+const EDITABLE_FIELDS = ['name', 'description', 'price', 'image', 'category', 'stock', 'featured', 'active'];
+
+const pickEditable = (body) =>
+  Object.fromEntries(EDITABLE_FIELDS.filter(field => body[field] !== undefined).map(field => [field, body[field]]));
+
 exports.getAllProducts = async (req, res, next) => {
   try {
-    const { category, search, sort, page = 1, limit = 10 } = req.query;
+    const { category, search, sort } = req.query;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100);
     
     // Build where clause
     const where = { active: true };
@@ -27,14 +35,14 @@ exports.getAllProducts = async (req, res, next) => {
     const { count, rows } = await Product.findAndCountAll({
       where,
       order,
-      limit: parseInt(limit),
+      limit,
       offset
     });
     
     res.json({
       products: rows,
       total: count,
-      page: parseInt(page),
+      page,
       totalPages: Math.ceil(count / limit)
     });
   } catch (error) {
@@ -44,7 +52,9 @@ exports.getAllProducts = async (req, res, next) => {
 
 exports.getProductById = async (req, res, next) => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const product = await Product.findOne({
+      where: { id: req.params.id, active: true }
+    });
     
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
@@ -58,7 +68,7 @@ exports.getProductById = async (req, res, next) => {
 
 exports.createProduct = async (req, res, next) => {
   try {
-    const product = await Product.create(req.body);
+    const product = await Product.create(pickEditable(req.body));
     res.status(201).json(product);
   } catch (error) {
     next(error);
@@ -73,7 +83,7 @@ exports.updateProduct = async (req, res, next) => {
       return res.status(404).json({ error: 'Product not found' });
     }
     
-    await product.update(req.body);
+    await product.update(pickEditable(req.body));
     res.json(product);
   } catch (error) {
     next(error);

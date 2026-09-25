@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const { sequelize, User, Product, Cart, Order } = require('../models');
 const bcrypt = require('bcryptjs');
 const logger = require('../utils/logger');

@@ -1,16 +1,23 @@
 const { body, param, query, validationResult } = require('express-validator');
 
 // Common validation chains
+// Lowercased but otherwise kept as typed (normalizeEmail strips dots from
+// Gmail addresses, which then no longer match the address Google returns)
 const validateEmail = body('email')
+  .trim()
+  .toLowerCase()
   .isEmail()
-  .normalizeEmail()
   .withMessage('Please provide a valid email');
 
-const validatePassword = body('password')
-  .isLength({ min: 6 })
-  .withMessage('Password must be at least 6 characters long')
+const passwordRules = (field) => body(field)
+  .isLength({ min: 8, max: 128 })
+  .withMessage('Password must be at least 8 characters long')
   .matches(/\d/)
-  .withMessage('Password must contain at least one number');
+  .withMessage('Password must contain at least one number')
+  .matches(/[a-zA-Z]/)
+  .withMessage('Password must contain at least one letter');
+
+const validatePassword = passwordRules('password');
 
 const validateName = body('name')
   .trim()
@@ -23,7 +30,8 @@ const validateName = body('name')
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    const list = errors.array();
+    return res.status(400).json({ error: list[0].msg, errors: list });
   }
   next();
 };
@@ -46,11 +54,26 @@ const validateChangePassword = [
   body('currentPassword')
     .notEmpty()
     .withMessage('Current password is required'),
-  body('newPassword')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long')
-    .matches(/\d/)
-    .withMessage('Password must contain at least one number'),
+  passwordRules('newPassword'),
+  handleValidationErrors
+];
+
+const validateProfile = [
+  validateName,
+  handleValidationErrors
+];
+
+const validatePasswordResetRequest = [
+  validateEmail,
+  handleValidationErrors
+];
+
+const validatePasswordReset = [
+  param('token')
+    .isHexadecimal()
+    .isLength({ min: 64, max: 64 })
+    .withMessage('Invalid reset token'),
+  validatePassword,
   handleValidationErrors
 ];
 
@@ -76,6 +99,24 @@ const validateProduct = [
   body('stock')
     .isInt({ min: 0 })
     .withMessage('Stock must be a non-negative integer'),
+  body('image')
+    .optional({ values: 'falsy' })
+    .isURL()
+    .withMessage('Image must be a URL'),
+  body('featured').optional().isBoolean().toBoolean(),
+  handleValidationErrors
+];
+
+// Same rules, but every field is optional for partial updates
+const validateProductUpdate = [
+  body('name').optional().trim().notEmpty().isLength({ max: 200 }).withMessage('Invalid product name'),
+  body('description').optional().trim().notEmpty().withMessage('Description cannot be empty'),
+  body('price').optional().isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+  body('category').optional().trim().notEmpty().withMessage('Category cannot be empty'),
+  body('stock').optional().isInt({ min: 0 }).withMessage('Stock must be a non-negative integer'),
+  body('image').optional({ values: 'falsy' }).isURL().withMessage('Image must be a URL'),
+  body('featured').optional().isBoolean().toBoolean(),
+  body('active').optional().isBoolean().toBoolean(),
   handleValidationErrors
 ];
 
@@ -135,6 +176,18 @@ const validateOrder = [
   handleValidationErrors
 ];
 
+const validateOrderStatus = [
+  body('status')
+    .isIn(['shipped', 'delivered', 'cancelled'])
+    .withMessage('Status must be shipped, delivered or cancelled'),
+  body('trackingNumber')
+    .optional({ values: 'falsy' })
+    .isString()
+    .trim()
+    .isLength({ max: 100 }),
+  handleValidationErrors
+];
+
 // ID validators
 const validateUUID = (paramName = 'id') => [
   param(paramName)
@@ -164,7 +217,12 @@ module.exports = {
   validateRegister,
   validateLogin,
   validateChangePassword,
+  validateProfile,
+  validatePasswordResetRequest,
+  validatePasswordReset,
   validateProduct,
+  validateProductUpdate,
+  validateOrderStatus,
   validateAddToCart,
   validateUpdateCart,
   validateOrder,
