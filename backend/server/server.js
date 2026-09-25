@@ -1,5 +1,10 @@
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 
+// On Render the storefront is served from this service's own URL
+if (!process.env.CLIENT_URL && process.env.RENDER_EXTERNAL_URL) {
+  process.env.CLIENT_URL = process.env.RENDER_EXTERNAL_URL;
+}
+
 // Refuse to start without the settings the app can't work without
 const REQUIRED_ENV = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'JWT_SECRET', 'SESSION_SECRET', 'CLIENT_URL', 'STRIPE_SECRET_KEY'];
 const missingEnv = REQUIRED_ENV.filter(name => !process.env[name] || process.env[name].startsWith('your_'));

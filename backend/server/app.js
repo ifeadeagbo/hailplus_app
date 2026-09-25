@@ -1,5 +1,7 @@
 // Builds the Express app without starting it, so tests can load it directly.
 // server.js starts it.
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
@@ -45,7 +47,20 @@ app.get('/health', async (req, res) => {
 app.use(requestLogger);
 
 // Security middleware
-app.use(helmet());
+// Content Security Policy: only the outside services the storefront uses
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      scriptSrc: ["'self'", 'https://js.stripe.com'],
+      frameSrc: ['https://js.stripe.com', 'https://hooks.stripe.com'],
+      connectSrc: ["'self'", 'https://api.stripe.com'],
+      // Product images are admin-entered URLs from any HTTPS host
+      imgSrc: ["'self'", 'data:', 'https:'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
+      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com']
+    }
+  }
+}));
 app.use(compression());
 
 // CORS configuration (before rate limiting so 429 responses keep CORS headers)
@@ -78,7 +93,8 @@ const sessionStore = new PgSession({
     port: process.env.DB_PORT,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
+    database: process.env.DB_NAME,
+    ...(process.env.DB_SSL === 'true' && { ssl: { rejectUnauthorized: true } })
   },
   // Test runs create many short-lived apps; skip the background pruning timer there
   pruneSessionInterval: process.env.NODE_ENV === 'test' ? false : 60 * 15
@@ -115,6 +131,20 @@ app.use('/api/public', publicRoutes);
 app.use('/api/', (req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
+
+// In production the API also serves the built storefront, so both share
+// one origin (the auth cookie is SameSite=Lax and hosting subdomains such
+// as *.onrender.com count as separate sites)
+const clientBuild = process.env.CLIENT_BUILD_DIR || path.join(__dirname, '..', '..', 'frontend', 'client', 'build');
+if (process.env.NODE_ENV === 'production' && fs.existsSync(path.join(clientBuild, 'index.html'))) {
+  // Fingerprinted assets never change; index.html must always be fresh
+  app.use('/static', express.static(path.join(clientBuild, 'static'), { immutable: true, maxAge: '1y' }));
+  app.use(express.static(clientBuild, { index: false, maxAge: 0 }));
+  app.get('*', (req, res) => {
+    res.set('Cache-Control', 'no-cache');
+    res.sendFile(path.join(clientBuild, 'index.html'));
+  });
+}
 
 // Error handling middleware
 app.use(errorHandler);

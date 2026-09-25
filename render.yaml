@@ -1,0 +1,83 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# One web service serves both the API and the storefront (same origin, so
+# the SameSite login cookie works), plus a PostgreSQL database.
+#
+# Free plan limits: the service sleeps after 15 minutes without traffic
+# (first visit afterwards takes ~1 minute), and the free database expires
+# 30 days after creation unless upgraded.
+
+databases:
+  - name: hailplus-db
+    plan: free
+    region: frankfurt
+    databaseName: hailplus
+    user: hailplus
+
+services:
+  - type: web
+    name: hailplus
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: >-
+      cd frontend/client && npm ci --include=dev && npm run build &&
+      cd ../../backend/server && npm ci --omit=dev
+    # Migrations and first-run setup (admin account, sample products) run
+    # before the server starts; both are safe to repeat
+    startCommand: cd backend/server && npm run migrate && npm run bootstrap && node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+
+      # Storefront build settings (baked into the JavaScript bundle)
+      - key: REACT_APP_API_URL
+        value: /api
+      - key: INLINE_RUNTIME_CHUNK
+        value: "false" # required by the Content Security Policy
+      - key: REACT_APP_STRIPE_PUBLIC_KEY
+        sync: false # pk_test_... (or pk_live_... when going live)
+
+      # Secrets: entered in the Render dashboard, never committed
+      - key: STRIPE_SECRET_KEY
+        sync: false # sk_test_... (or sk_live_...)
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false # whsec_... from the Stripe webhook; can be added after the first deploy
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false # 12+ characters with a letter and a number
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: JWT_EXPIRE
+        value: 7d
+      - key: STORE_NAME
+        value: Hailplus
+
+      # Database connection, filled in by Render
+      - key: DB_HOST
+        fromDatabase:
+          name: hailplus-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: hailplus-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: hailplus-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: hailplus-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: hailplus-db
+          property: password

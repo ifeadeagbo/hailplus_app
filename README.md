@@ -76,7 +76,22 @@ npm run migrate:undo     # roll back the latest one
 
 To change the schema, add a new file named `YYYYMMDDHHMMSS-description.js` exporting `up(queryInterface, Sequelize)` and `down(...)`, and update the matching model.
 
-## Deploying
+## Deploying to Render
+
+`render.yaml` sets up everything: a PostgreSQL database and one web service that serves both the API and the storefront (same address, so the login cookie works). Region: Frankfurt, the closest to the UK.
+
+1. Push this repository to GitHub.
+2. Sign up at https://render.com with your GitHub account.
+3. **New → Blueprint**, pick the repository, and fill in the values it asks for:
+   - `REACT_APP_STRIPE_PUBLIC_KEY` / `STRIPE_SECRET_KEY`: your Stripe **test** keys to start with
+   - `ADMIN_EMAIL` / `ADMIN_PASSWORD`: the store owner's login (password 12+ characters with a letter and a number)
+   - `STRIPE_WEBHOOK_SECRET`: leave blank for now
+4. **Apply.** The first deploy takes a few minutes. It runs migrations, creates the admin account and adds the sample products (set `SAMPLE_PRODUCTS=false` to start empty).
+5. In Stripe, add a webhook endpoint `https://<your-service>.onrender.com/api/webhooks/stripe` (events listed below), then paste its signing secret into `STRIPE_WEBHOOK_SECRET` in Render.
+
+Free plan limits: the service sleeps after 15 minutes without visitors (the next visit takes about a minute), and the free database expires 30 days after creation unless upgraded. For a free database that doesn't expire, use Neon (https://neon.tech): set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` from its connection details and `DB_SSL=true`.
+
+## Deploying elsewhere
 
 Both apps ship with a Dockerfile. Any host that runs containers or Node apps works (Render, Railway, Fly.io, AWS, ...), with a managed PostgreSQL database.
 

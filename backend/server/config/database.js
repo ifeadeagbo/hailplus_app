@@ -9,6 +9,10 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: 'postgres',
+    // Managed databases reached over the internet (e.g. Neon) require SSL
+    ...(process.env.DB_SSL === 'true' && {
+      dialectOptions: { ssl: { require: true, rejectUnauthorized: true } }
+    }),
     // Set DB_LOGGING=true to print every SQL query while debugging
     logging: process.env.DB_LOGGING === 'true' ? console.log : false,
     pool: {
