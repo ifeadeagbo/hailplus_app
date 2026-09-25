@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import store from '../../config/store';
 import { formatPrice, formatShortPrice } from '../../utils/format';
+import Logo from './Logo';
 
 const navLinks = [
   { label: 'Home', to: '/' },
@@ -67,7 +68,7 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-white">
-      <div className="bg-ink text-white text-[11px] uppercase tracking-label text-center py-2 px-4">
+      <div className="bg-charcoal text-gold text-[11px] uppercase tracking-label text-center py-2 px-4">
         Free UK delivery on orders over {formatShortPrice(store.freeShippingOver)}
       </div>
 
@@ -79,8 +80,8 @@ const Header = () => {
             </IconButton>
           </div>
 
-          <Link to="/" className="font-display text-xl lg:text-2xl font-medium uppercase tracking-[0.3em] text-ink">
-            {store.name}
+          <Link to="/" aria-label={`${store.name} home`}>
+            <Logo />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-7">

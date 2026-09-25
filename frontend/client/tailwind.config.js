@@ -5,17 +5,22 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
-        display: ['Jost', 'Inter', 'system-ui', 'sans-serif']
+        display: ['Jost', 'Inter', 'system-ui', 'sans-serif'],
+        logo: ['Comfortaa', 'Jost', 'system-ui', 'sans-serif']
       },
       colors: {
         ink: '#1a1a1a',
         muted: '#767676',
         line: '#e8e8e8',
         cream: '#f7f5f2',
+        // Brand gold from the logo. DEFAULT is darkened so small text on
+        // white stays readable (WCAG AA); gold is for large/decorative use
         accent: {
-          DEFAULT: '#a47148',
-          light: '#f3ebe3'
+          DEFAULT: '#8c6a17',
+          light: '#f7f0dd'
         },
+        gold: '#d4a73a',
+        charcoal: '#2e2e2e',
         // Older pages use Tailwind's blue for buttons and links; remapping it
         // gives them the store's near-black primary without editing each page
         blue: {

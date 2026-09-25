@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import store from '../../config/store';
+import Logo from './Logo';
 
 const socialLinks = [
   { name: 'Facebook', icon: 'fa-facebook-f', url: store.social.facebook },
@@ -23,7 +24,7 @@ const Footer = () => {
     <footer className="bg-cream mt-auto border-t border-line">
       <div className="shop-container py-16 grid grid-cols-2 md:grid-cols-4 gap-10">
         <div className="col-span-2 md:col-span-1">
-          <Link to="/" className="font-display text-xl uppercase tracking-[0.3em]">{store.name}</Link>
+          <Link to="/" aria-label={`${store.name} home`}><Logo size="sm" /></Link>
           <p className="mt-5 text-sm text-ink/70 leading-relaxed max-w-xs">
             Quality everyday products, tech and style, delivered across the UK from {store.address}.
           </p>
