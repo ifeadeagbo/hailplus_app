@@ -1,77 +1,37 @@
-const fs = require('fs');
-const path = require('path');
+// Logs go to stdout/stderr so the host (Docker, Render, Railway, etc.)
+// collects them. Production writes one JSON object per line for log
+// search tools; development writes readable lines; tests stay quiet.
+const LEVELS = { debug: 10, info: 20, warn: 30, error: 40 };
 
-class Logger {
-  constructor() {
-    this.logDir = path.join(__dirname, '..', 'logs');
-    this.ensureLogDirectory();
-  }
+const isProduction = process.env.NODE_ENV === 'production';
+const defaultLevel = process.env.NODE_ENV === 'test' ? 'error' : (isProduction ? 'info' : 'debug');
+const minLevel = LEVELS[process.env.LOG_LEVEL] || LEVELS[defaultLevel];
 
-  ensureLogDirectory() {
-    if (!fs.existsSync(this.logDir)) {
-      fs.mkdirSync(this.logDir, { recursive: true });
-    }
-  }
+const serializeError = (error) =>
+  error instanceof Error
+    ? { error: error.message, stack: error.stack, ...(error.code && { code: error.code }) }
+    : error;
 
-  getTimestamp() {
-    return new Date().toISOString();
-  }
+const write = (level, message, data) => {
+  if (LEVELS[level] < minLevel) return;
+  const stream = level === 'error' || level === 'warn' ? process.stderr : process.stdout;
 
-  writeToFile(level, message, data = null) {
-    const date = new Date().toISOString().split('T')[0];
-    const filename = path.join(this.logDir, `${date}.log`);
-    
-    const logEntry = {
-      timestamp: this.getTimestamp(),
+  if (isProduction) {
+    stream.write(JSON.stringify({
+      time: new Date().toISOString(),
       level,
       message,
-      ...(data && { data })
-    };
-
-    const logLine = JSON.stringify(logEntry) + '\n';
-    
-    fs.appendFile(filename, logLine, (err) => {
-      if (err) {
-        console.error('Failed to write to log file:', err);
-      }
-    });
+      ...(data && (typeof data === 'object' ? data : { data }))
+    }) + '\n');
+  } else {
+    const details = data ? ` ${JSON.stringify(data)}` : '';
+    stream.write(`[${level.toUpperCase()}] ${new Date().toISOString()} - ${message}${details}\n`);
   }
+};
 
-  info(message, data) {
-    console.log(`[INFO] ${this.getTimestamp()} - ${message}`);
-    this.writeToFile('INFO', message, data);
-  }
-
-  error(message, error) {
-    console.error(`[ERROR] ${this.getTimestamp()} - ${message}`);
-    this.writeToFile('ERROR', message, {
-      error: error.message,
-      stack: error.stack
-    });
-  }
-
-  warn(message, data) {
-    console.warn(`[WARN] ${this.getTimestamp()} - ${message}`);
-    this.writeToFile('WARN', message, data);
-  }
-
-  debug(message, data) {
-    if (process.env.NODE_ENV === 'development') {
-      console.debug(`[DEBUG] ${this.getTimestamp()} - ${message}`);
-      this.writeToFile('DEBUG', message, data);
-    }
-  }
-
-  http(req) {
-    const log = {
-      method: req.method,
-      url: req.url,
-      ip: req.ip,
-      userAgent: req.get('user-agent')
-    };
-    
-    this.info(`HTTP ${req.method} ${req.url}`, log);
-  }
-}
-
-module.exports = new Logger();
+module.exports = {
+  debug: (message, data) => write('debug', message, data),
+  info: (message, data) => write('info', message, data),
+  warn: (message, data) => write('warn', message, data),
+  error: (message, error) => write('error', message, error && serializeError(error))
+};

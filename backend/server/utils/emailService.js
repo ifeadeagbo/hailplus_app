@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const logger = require('./logger');
 
 // Escapes user-supplied text (names, addresses) before it goes into email HTML
 const escapeHtml = (value) =>
@@ -92,9 +93,9 @@ exports.sendOrderConfirmation = async (email, order) => {
   
   try {
     await transporter.sendMail(mailOptions);
-    console.log('Order confirmation email sent');
+    logger.info('Order confirmation email sent', { orderId: order.id });
   } catch (error) {
-    console.error('Error sending email:', error);
+    logger.error('Error sending email', error);
   }
 };
 
@@ -151,9 +152,9 @@ exports.sendPasswordReset = async (email, token) => {
   
   try {
     await transporter.sendMail(mailOptions);
-    console.log('Password reset email sent');
+    logger.info('Password reset email sent');
   } catch (error) {
-    console.error('Error sending email:', error);
+    logger.error('Error sending email', error);
   }
 };
 
@@ -205,8 +206,8 @@ exports.sendRefundConfirmation = async (email, order, amount) => {
   
   try {
     await transporter.sendMail(mailOptions);
-    console.log('Refund confirmation email sent');
+    logger.info('Refund confirmation email sent', { orderId: order.id });
   } catch (error) {
-    console.error('Error sending email:', error);
+    logger.error('Error sending email', error);
   }
 };

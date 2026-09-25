@@ -34,6 +34,8 @@ export const CartProvider = ({ children }) => {
       }
       setLoading(false);
     }
+    // Reload only when the user logs in or out; fetchCart changes every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   const fetchCart = async (discountCode = discount?.code) => {

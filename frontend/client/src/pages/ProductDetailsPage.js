@@ -12,28 +12,34 @@ const ProductDetailsPage = () => {
   const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
-    fetchProduct();
-  }, [id]);
+    // Ignore responses for a product the user has already navigated away from
+    let stale = false;
 
-  const fetchProduct = async () => {
-    try {
-      setLoading(true);
-      const productData = await productService.getProductById(id);
-      setProduct(productData);
-      
-      // Fetch related products
-      const related = await productService.getAllProducts({ 
-        category: productData.category,
-        limit: 4 
-      });
-      setRelatedProducts(related.products.filter(p => p.id !== id));
-    } catch (error) {
-      console.error('Error fetching product:', error);
-      navigate('/products');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const productData = await productService.getProductById(id);
+        if (stale) return;
+        setProduct(productData);
+        
+        // Fetch related products
+        const related = await productService.getAllProducts({ 
+          category: productData.category,
+          limit: 4 
+        });
+        if (stale) return;
+        setRelatedProducts(related.products.filter(p => p.id !== id));
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        if (!stale) navigate('/products');
+      } finally {
+        if (!stale) setLoading(false);
+      }
+    };
+
+    fetchProduct();
+    return () => { stale = true; };
+  }, [id, navigate]);
 
   const handleImageError = (e) => {
     e.target.src = 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=200&h=200&fit=crop';

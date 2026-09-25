@@ -1,6 +1,6 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
-const { sequelize, User, Product, Cart, Order } = require('../models');
-const bcrypt = require('bcryptjs');
+const { sequelize, User, Product } = require('../models');
+const { runMigrations } = require('../db/migrate');
 const logger = require('../utils/logger');
 
 const seedUsers = async () => {
@@ -309,9 +309,14 @@ const seedProducts = async () => {
 
 const seedDatabase = async () => {
   try {
-    // Force sync database (this will drop existing tables)
-    await sequelize.sync({ force: true });
-    logger.info('Database synced');
+    // Sample data for local development only: this wipes every table
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Refusing to seed a production database');
+    }
+    
+    await runMigrations();
+    await sequelize.query('TRUNCATE "Carts", "Orders", "Products", "Users", "session" CASCADE');
+    logger.info('Database reset');
 
     // Seed data
     await seedUsers();

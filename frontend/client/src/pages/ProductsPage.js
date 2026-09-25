@@ -19,21 +19,26 @@ const ProductsPage = () => {
   const categories = ['Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports'];
 
   useEffect(() => {
-    fetchProducts();
-  }, [filters]);
+    // Ignore responses that arrive after the filters changed again
+    let stale = false;
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await productService.getAllProducts(filters);
-      setProducts(response.products);
-      setTotalPages(response.totalPages);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await productService.getAllProducts(filters);
+        if (stale) return;
+        setProducts(response.products);
+        setTotalPages(response.totalPages);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        if (!stale) setLoading(false);
+      }
+    };
+
+    fetchProducts();
+    return () => { stale = true; };
+  }, [filters]);
 
   const handleFilterChange = (key, value) => {
     const newFilters = { ...filters, [key]: value, page: 1 };
