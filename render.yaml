@@ -1,17 +1,10 @@
 # Render Blueprint: https://render.com/docs/blueprint-spec
 # One web service serves both the API and the storefront (same origin, so
-# the SameSite login cookie works), plus a PostgreSQL database.
+# the SameSite login cookie works). The database is Supabase (PostgreSQL).
 #
 # Free plan limits: the service sleeps after 15 minutes without traffic
-# (first visit afterwards takes ~1 minute), and the free database expires
-# 30 days after creation unless upgraded.
-
-databases:
-  - name: hailplus-db
-    plan: free
-    region: frankfurt
-    databaseName: hailplus
-    user: hailplus
+# (first visit afterwards takes ~1 minute); a free Supabase project pauses
+# after a week without activity.
 
 services:
   - type: web
@@ -60,24 +53,18 @@ services:
       - key: STORE_NAME
         value: Hailplus
 
-      # Database connection, filled in by Render
+      # Database: Supabase → Connect → Session pooler (works over IPv4)
       - key: DB_HOST
-        fromDatabase:
-          name: hailplus-db
-          property: host
+        sync: false # e.g. aws-0-eu-west-2.pooler.supabase.com
       - key: DB_PORT
-        fromDatabase:
-          name: hailplus-db
-          property: port
+        value: "5432"
       - key: DB_NAME
-        fromDatabase:
-          name: hailplus-db
-          property: database
+        value: postgres
       - key: DB_USER
-        fromDatabase:
-          name: hailplus-db
-          property: user
+        sync: false # e.g. postgres.abcdefghijklmnop
       - key: DB_PASSWORD
-        fromDatabase:
-          name: hailplus-db
-          property: password
+        sync: false # the database password set when creating the project
+      - key: DB_SSL
+        value: "true"
+      - key: DB_SSL_CA
+        sync: false # Supabase → Database settings → SSL → download certificate, paste its text

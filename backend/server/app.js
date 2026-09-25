@@ -11,6 +11,7 @@ const PgSession = require('connect-pg-simple')(session);
 const passport = require('passport');
 const helmet = require('helmet');
 const { sequelize } = require('./models');
+const { sslOptions } = require('./config/database');
 require('./config/passport');
 
 const authRoutes = require('./routes/auth');
@@ -94,7 +95,7 @@ const sessionStore = new PgSession({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    ...(process.env.DB_SSL === 'true' && { ssl: { rejectUnauthorized: true } })
+    ...(process.env.DB_SSL === 'true' && { ssl: sslOptions })
   },
   // Test runs create many short-lived apps; skip the background pruning timer there
   pruneSessionInterval: process.env.NODE_ENV === 'test' ? false : 60 * 15

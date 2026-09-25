@@ -76,20 +76,24 @@ npm run migrate:undo     # roll back the latest one
 
 To change the schema, add a new file named `YYYYMMDDHHMMSS-description.js` exporting `up(queryInterface, Sequelize)` and `down(...)`, and update the matching model.
 
-## Deploying to Render
+## Deploying to Render (with Supabase)
 
-`render.yaml` sets up everything: a PostgreSQL database and one web service that serves both the API and the storefront (same address, so the login cookie works). Region: Frankfurt, the closest to the UK.
+`render.yaml` sets up one web service that serves both the API and the storefront (same address, so the login cookie works), in Frankfurt. The database is Supabase.
 
-1. Push this repository to GitHub.
-2. Sign up at https://render.com with your GitHub account.
-3. **New → Blueprint**, pick the repository, and fill in the values it asks for:
-   - `REACT_APP_STRIPE_PUBLIC_KEY` / `STRIPE_SECRET_KEY`: your Stripe **test** keys to start with
-   - `ADMIN_EMAIL` / `ADMIN_PASSWORD`: the store owner's login (password 12+ characters with a letter and a number)
-   - `STRIPE_WEBHOOK_SECRET`: leave blank for now
-4. **Apply.** The first deploy takes a few minutes. It runs migrations, creates the admin account and adds the sample products (set `SAMPLE_PRODUCTS=false` to start empty).
-5. In Stripe, add a webhook endpoint `https://<your-service>.onrender.com/api/webhooks/stripe` (events listed below), then paste its signing secret into `STRIPE_WEBHOOK_SECRET` in Render.
+**1. Supabase**
+1. Create a project at https://supabase.com, region **London (eu-west-2)**. Save the database password.
+2. **Connect** (top of the dashboard) → **Session pooler**. Note the host (e.g. `aws-0-eu-west-2.pooler.supabase.com`) and user (e.g. `postgres.abcdefghijklmnop`). Render needs the pooler: the direct connection is IPv6-only.
+3. **Project Settings → Database → SSL Configuration → Download certificate.** Open the file in a text editor; you'll paste its text into Render.
 
-Free plan limits: the service sleeps after 15 minutes without visitors (the next visit takes about a minute), and the free database expires 30 days after creation unless upgraded. For a free database that doesn't expire, use Neon (https://neon.tech): set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` from its connection details and `DB_SSL=true`.
+**2. Render**
+1. Sign up at https://render.com with GitHub, then **New → Blueprint** and pick this repository.
+2. Fill in: `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_SSL_CA` (the certificate text) from Supabase; `REACT_APP_STRIPE_PUBLIC_KEY` and `STRIPE_SECRET_KEY` (Stripe **test** keys to start); `ADMIN_EMAIL` / `ADMIN_PASSWORD` (12+ characters with a letter and a number). Leave `STRIPE_WEBHOOK_SECRET` blank for now.
+3. **Apply.** The first deploy runs migrations, creates the admin account and adds the sample products (set `SAMPLE_PRODUCTS=false` to start empty).
+4. In Stripe, add a webhook endpoint `https://<your-service>.onrender.com/api/webhooks/stripe` (events listed below) and paste its signing secret into `STRIPE_WEBHOOK_SECRET` in Render.
+
+**Security:** migrations turn on Row Level Security for every table, so Supabase's public Data API cannot read or change store data; the app connects as the tables' owner and is unaffected. Never use the Supabase `service_role` key in the storefront.
+
+**Free plan limits:** the Render service sleeps after 15 minutes without visitors (the next visit takes about a minute); a free Supabase project pauses after a week without activity (restore it from the dashboard).
 
 ## Deploying elsewhere
 
