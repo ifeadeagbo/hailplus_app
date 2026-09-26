@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import store from '../../config/store';
 
 // Layout for the policy and help pages
@@ -19,11 +20,12 @@ export const Section = ({ title, children }) => (
   </section>
 );
 
+// Links to the contact page, which also works without a desktop mail app
 export const SupportEmail = () =>
   store.supportEmail ? (
-    <a href={`mailto:${store.supportEmail}`} className="text-blue-600 hover:underline">
+    <Link to="/contact" className="text-accent hover:underline">
       {store.supportEmail}
-    </a>
+    </Link>
   ) : (
     <span className="bg-yellow-100 px-1">[support email coming soon]</span>
   );

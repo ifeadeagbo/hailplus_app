@@ -30,6 +30,7 @@ import TermsPage from './pages/legal/TermsPage';
 import CookiesPage from './pages/legal/CookiesPage';
 import ReturnsPage from './pages/legal/ReturnsPage';
 import FaqPage from './pages/legal/FaqPage';
+import ContactPage from './pages/ContactPage';
 
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
@@ -61,6 +62,7 @@ function App() {
                     <Route path="/cookies" element={<CookiesPage />} />
                     <Route path="/returns" element={<ReturnsPage />} />
                     <Route path="/faq" element={<FaqPage />} />
+                    <Route path="/contact" element={<ContactPage />} />
                     <Route
                       path="/account"
                       element={

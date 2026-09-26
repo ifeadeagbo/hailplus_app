@@ -63,11 +63,7 @@ const Footer = () => {
             <FooterLink to="/returns">Returns & refunds</FooterLink>
             <FooterLink to="/faq">FAQ</FooterLink>
             <FooterLink to="/account">My account</FooterLink>
-            {store.supportEmail && (
-              <li>
-                <a href={`mailto:${store.supportEmail}`} className="text-sm text-ink/70 hover:text-accent">Contact us</a>
-              </li>
-            )}
+            <FooterLink to="/contact">Contact us</FooterLink>
           </ul>
         </div>
 
