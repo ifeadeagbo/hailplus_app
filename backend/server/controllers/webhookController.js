@@ -91,7 +91,7 @@ async function handleRefund(charge) {
   }
   
   const user = await order.getUser();
-  await emailService.sendRefundConfirmation(user.email, order, charge.amount_refunded / 100);
+  emailService.sendRefundConfirmation(user.email, order, charge.amount_refunded / 100);
   
   logger.info(`Refund processed for order ${order.id}`);
 }

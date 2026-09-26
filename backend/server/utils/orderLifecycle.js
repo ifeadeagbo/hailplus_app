@@ -44,7 +44,8 @@ const markOrderPaid = async (order) => {
   await order.reload();
   const user = await User.findByPk(order.userId);
   if (user) {
-    await emailService.sendOrderConfirmation(user.email, order);
+    // Not awaited: the customer's confirmation must not wait on the mail server
+    emailService.sendOrderConfirmation(user.email, order);
   }
 
   logger.info(`Order ${order.id} paid`);

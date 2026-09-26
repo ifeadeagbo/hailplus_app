@@ -164,6 +164,18 @@ describe('confirming payment', () => {
     expect(emailService.sendOrderConfirmation).toHaveBeenCalledTimes(1);
   });
 
+  test('a mail server that never answers does not hold up checkout', async () => {
+    emailService.sendOrderConfirmation.mockImplementationOnce(() => new Promise(() => {}));
+    const c = await buyerWithCart([await createProduct(), 1]);
+    const { order } = (await placeOrder(c)).body;
+    stripe.__setStatus(order.paymentIntentId, 'succeeded');
+
+    const started = Date.now();
+    const res = await c.post(`/api/orders/${order.id}/confirm-payment`);
+    expect(res.body.status).toBe('processing');
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
+
   test('leaves the order pending when the card was declined', async () => {
     const c = await buyerWithCart([await createProduct(), 1]);
     const { order } = (await placeOrder(c)).body;

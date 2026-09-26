@@ -11,6 +11,9 @@ const escapeHtml = (value) =>
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[char]);
 
+// Every send* function catches its own errors, so callers can send without
+// awaiting: a slow or unreachable mail server must never hold up a request.
+// Timeouts keep a blocked SMTP port from tying up connections for minutes.
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: process.env.EMAIL_PORT,
@@ -18,7 +21,10 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  }
+  },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 30000
 });
 
 exports.sendOrderConfirmation = async (email, order) => {

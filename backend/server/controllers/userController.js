@@ -166,7 +166,8 @@ exports.requestPasswordReset = async (req, res, next) => {
     await user.save();
     
     // Send email
-    await emailService.sendPasswordReset(email, resetToken);
+    // Not awaited: also keeps the response time the same whether or not the account exists
+    emailService.sendPasswordReset(email, resetToken);
     
     res.json({ message: 'If an account exists, a password reset email has been sent' });
   } catch (error) {

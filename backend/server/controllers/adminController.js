@@ -106,7 +106,7 @@ exports.updateOrderStatus = async (req, res, next) => {
     
     if (status === 'shipped') {
       const user = await order.getUser();
-      await emailService.sendShippingNotification(user.email, order);
+      emailService.sendShippingNotification(user.email, order);
     }
     
     res.json(order);
