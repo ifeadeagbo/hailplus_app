@@ -3,7 +3,9 @@ const logger = require('./logger');
 
 const STORE_NAME = process.env.STORE_NAME || 'Our Store';
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || process.env.EMAIL_USER;
-const FROM = `"${STORE_NAME}" <${process.env.EMAIL_USER}>`;
+// With Resend, mail comes from the store's own domain (EMAIL_FROM); customer
+// replies go to the support inbox
+const FROM = process.env.EMAIL_FROM || `"${STORE_NAME}" <${process.env.EMAIL_USER}>`;
 
 // Escapes user-supplied text (names, addresses) before it goes into email HTML
 const escapeHtml = (value) =>
@@ -26,6 +28,37 @@ const transporter = nodemailer.createTransport({
   greetingTimeout: 10000,
   socketTimeout: 30000
 });
+
+// Sends through Resend's HTTPS API when RESEND_API_KEY is set (works on
+// hosts that block SMTP ports, such as Render's free plan), otherwise SMTP
+const deliver = async (mailOptions) => {
+  if (!process.env.RESEND_API_KEY) {
+    return transporter.sendMail({ ...mailOptions, replyTo: SUPPORT_EMAIL });
+  }
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: mailOptions.from,
+      to: [mailOptions.to],
+      subject: mailOptions.subject,
+      html: mailOptions.html,
+      reply_to: SUPPORT_EMAIL
+    }),
+    signal: AbortSignal.timeout(15000)
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    throw new Error(`Resend responded ${response.status}: ${detail.slice(0, 200)}`);
+  }
+  return response.json();
+};
+exports.deliver = deliver;
 
 exports.sendOrderConfirmation = async (email, order) => {
   const mailOptions = {
@@ -98,7 +131,7 @@ exports.sendOrderConfirmation = async (email, order) => {
   };
   
   try {
-    await transporter.sendMail(mailOptions);
+    await deliver(mailOptions);
     logger.info('Order confirmation email sent', { orderId: order.id });
   } catch (error) {
     logger.error('Error sending email', error);
@@ -157,7 +190,7 @@ exports.sendPasswordReset = async (email, token) => {
   };
   
   try {
-    await transporter.sendMail(mailOptions);
+    await deliver(mailOptions);
     logger.info('Password reset email sent');
   } catch (error) {
     logger.error('Error sending email', error);
@@ -211,7 +244,7 @@ exports.sendRefundConfirmation = async (email, order, amount) => {
   };
   
   try {
-    await transporter.sendMail(mailOptions);
+    await deliver(mailOptions);
     logger.info('Refund confirmation email sent', { orderId: order.id });
   } catch (error) {
     logger.error('Error sending email', error);
@@ -272,7 +305,7 @@ exports.sendShippingNotification = async (email, order) => {
   };
   
   try {
-    await transporter.sendMail(mailOptions);
+    await deliver(mailOptions);
     logger.info('Shipping notification sent', { orderId: order.id });
   } catch (error) {
     logger.error('Error sending email', error);

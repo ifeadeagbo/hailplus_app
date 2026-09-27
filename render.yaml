@@ -58,8 +58,13 @@ services:
       - key: SUPPORT_EMAIL
         value: hailplusinc@gmail.com
 
-      # Email (order confirmations, shipping, refunds, password resets)
-      # sent through Gmail with an app password
+      # Email (order confirmations, shipping, refunds, password resets).
+      # Resend's HTTPS API is used when RESEND_API_KEY is set: Render's free
+      # plan blocks SMTP ports, so the Gmail settings below are a fallback
+      - key: RESEND_API_KEY
+        sync: false # re_... from Resend → API Keys (sending access, hailplus.co.uk)
+      - key: EMAIL_FROM
+        value: Hailplus <orders@hailplus.co.uk>
       - key: EMAIL_HOST
         value: smtp.gmail.com
       - key: EMAIL_PORT

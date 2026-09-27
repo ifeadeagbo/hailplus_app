@@ -74,6 +74,7 @@ Put the `whsec_...` secret it prints into `STRIPE_WEBHOOK_SECRET` in `backend/se
 |---|---|
 | Store name, business name, address, support email, social links, categories, home page images | `frontend/client/src/config/store.js` |
 | Store name and support email in emails | `STORE_NAME`, `SUPPORT_EMAIL` in the backend environment |
+| Email sending | `RESEND_API_KEY` + `EMAIL_FROM` (Resend, used in production) or the `EMAIL_*` SMTP settings (local development) |
 | Currency, VAT rate, shipping cost and free-shipping threshold, discount codes | `backend/server/utils/pricing.js` (and the matching FAQ numbers in `store.js`) |
 | Colours, fonts, corner style | `frontend/client/tailwind.config.js` and `frontend/client/src/index.css` |
 | Logo | `frontend/client/src/components/common/Logo.js` and `logoMark.js`; browser tab icon in `frontend/client/public/favicon.svg` |
@@ -154,7 +155,7 @@ Any host that runs Node works, with a managed PostgreSQL database.
 - [x] Admin account created on first deploy from `ADMIN_EMAIL` / `ADMIN_PASSWORD` (demo accounts never exist in production)
 
 **To do:**
-- [ ] Gmail app password for hailplusinc@gmail.com in `EMAIL_PASS` (local `.env` and Render). Until then, order and password emails are not sent. Gmail allows about 500 emails a day; move to a provider such as Resend with your own domain as the store grows.
+- [ ] Email: verify hailplus.co.uk in Resend and set `RESEND_API_KEY` on Render (emails come from orders@hailplus.co.uk, replies go to hailplusinc@gmail.com). Render's free plan blocks SMTP, so Gmail sending only works locally.
 - [ ] Replace every `[PLACEHOLDER]` in `frontend/client/src/pages/legal/`, then have the Privacy Policy, Terms and Returns policy reviewed.
 - [ ] Decide shipping prices (currently £10, free over £100) and replace the demo discount codes (`WELCOME10`, `SAVE20`, `FREESHIP`, `FLAT50`) in `pricing.js`.
 - [ ] Register with the ICO (UK data protection fee): https://ico.org.uk/for-organisations/data-protection-fee/
