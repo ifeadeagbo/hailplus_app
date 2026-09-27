@@ -54,7 +54,7 @@ services:
         value: Hailplus
       # Public address, used in email links (password reset, order tracking)
       - key: CLIENT_URL
-        value: https://hailplus.co.uk
+        value: https://www.hailplus.co.uk
       - key: SUPPORT_EMAIL
         value: hailplusinc@gmail.com
 
