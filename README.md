@@ -130,6 +130,8 @@ In production one service serves both the API and the storefront from the same a
 
 In the Stripe Dashboard, add a webhook endpoint `https://<your-service>.onrender.com/api/webhooks/stripe` for `payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.canceled` and `charge.refunded`. Paste its signing secret into `STRIPE_WEBHOOK_SECRET` on Render.
 
+**Custom domain (hailplus.co.uk, registered with Cloudflare):** Render → the service → **Settings → Custom Domains** → add `hailplus.co.uk` (Render also adds `www` and redirects it). In Cloudflare → **DNS → Records**, add `CNAME @ → hailplus.onrender.com` and `CNAME www → hailplus.onrender.com`, both **DNS only** (grey cloud) so Render can issue the HTTPS certificate. `CLIENT_URL` in `render.yaml` is the public address used in email links.
+
 **Free plan limits:** the Render service sleeps after 15 minutes without visitors (the next visit takes about a minute), and a free Supabase project pauses after a week without activity (restore it from the Supabase dashboard).
 
 **Going live with real payments:** activate the Stripe account, replace both Stripe keys with live ones (`pk_live_...`, `sk_live_...`), and create the webhook again in live mode. Keep test keys in local `.env` files, and never commit a live key.

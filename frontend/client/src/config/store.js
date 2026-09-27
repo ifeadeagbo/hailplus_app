@@ -3,6 +3,7 @@
 // starting-point drafts: have them reviewed for your business and country.
 const store = {
   name: 'Hailplus',
+  domain: 'hailplus.co.uk',
   // Fill in once the business is registered, e.g. 'Hailplus Ltd'
   legalName: '',
   address: 'Aberdeen',

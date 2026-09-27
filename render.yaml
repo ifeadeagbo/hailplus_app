@@ -52,6 +52,9 @@ services:
         value: 7d
       - key: STORE_NAME
         value: Hailplus
+      # Public address, used in email links (password reset, order tracking)
+      - key: CLIENT_URL
+        value: https://hailplus.co.uk
       - key: SUPPORT_EMAIL
         value: hailplusinc@gmail.com
 
