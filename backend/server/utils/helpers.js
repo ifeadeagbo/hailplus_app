@@ -39,6 +39,10 @@ const sanitizeUser = (user) => {
   delete sanitized.password;
   delete sanitized.resetPasswordToken;
   delete sanitized.resetPasswordExpires;
+  delete sanitized.tokenVersion;
+  delete sanitized.twoFactorSecret;
+  delete sanitized.twoFactorRecoveryCodes;
+  delete sanitized.twoFactorLastStep;
   return sanitized;
 };
 

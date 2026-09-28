@@ -169,5 +169,11 @@ Any host that runs Node works, with a managed PostgreSQL database.
 
 - **Logs:** one JSON line per event on stdout in production, including every request with its `X-Request-Id`. Set `LOG_LEVEL` to adjust, or `DB_LOGGING=true` to print SQL.
 - **Abandoned checkouts:** unpaid orders release their reserved stock after 30 minutes (checked every 5 minutes).
-- **Security:** sign-in uses an httpOnly cookie. Changing or resetting a password signs out other devices. Sign-in and password reset are rate limited, and a Content Security Policy only allows Stripe, Google Fonts, Font Awesome and HTTPS images.
+- **Security:**
+  - Sign-in uses an httpOnly cookie. Changing or resetting a password signs out other devices.
+  - **Two-factor sign-in** (authenticator app) can be turned on in My Account, with 8 single-use recovery codes. The admin panel reminds admins until it's on. Secrets are encrypted with `TWO_FACTOR_KEY` (generated on Render; don't change it once in use).
+  - New passwords are checked against known data breaches (Have I Been Pwned, k-anonymity).
+  - Rate limits: failed sign-ins, password resets, orders, and 10 new accounts per hour per IP.
+  - Customers can delete their account in My Account; personal details are erased and order records kept (UK tax, 6 years).
+  - A Content Security Policy only allows Stripe, Google Fonts, Font Awesome and HTTPS images.
 - **Shutdown:** on `SIGTERM` the server finishes in-flight requests, then closes the database connections.

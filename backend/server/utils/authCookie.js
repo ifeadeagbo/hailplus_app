@@ -33,6 +33,7 @@ const publicUser = (user) => ({
   role: user.role,
   provider: user.provider,
   emailVerified: user.emailVerified,
+  twoFactorEnabled: user.twoFactorEnabled,
   createdAt: user.createdAt
 });
 

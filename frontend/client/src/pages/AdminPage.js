@@ -129,6 +129,16 @@ const AdminPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Admin Panel</h1>
+
+      {currentUser && !currentUser.twoFactorEnabled && (
+        <div className="mb-8 p-4 border border-yellow-300 bg-yellow-50 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span>
+            <strong>Protect your store:</strong> anyone with your admin password can change products, orders and refunds.
+            Turn on two-factor sign-in so a code from your phone is needed too.
+          </span>
+          <button onClick={() => navigate('/account')} className="btn-dark px-5 py-2 whitespace-nowrap">Set it up</button>
+        </div>
+      )}
       
       <div className="flex flex-col md:flex-row gap-8">
         {/* Sidebar */}

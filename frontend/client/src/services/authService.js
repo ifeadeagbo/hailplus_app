@@ -31,6 +31,27 @@ const authService = {
     return data;
   },
 
+  // Two-factor sign-in
+  verifyTwoFactor: async (code) => {
+    const { data } = await api.post('/auth/2fa/verify', { code });
+    return data;
+  },
+
+  setupTwoFactor: async () => {
+    const { data } = await api.post('/auth/2fa/setup');
+    return data;
+  },
+
+  enableTwoFactor: async (code) => {
+    const { data } = await api.post('/auth/2fa/enable', { code });
+    return data;
+  },
+
+  disableTwoFactor: async (password, code) => {
+    const { data } = await api.post('/auth/2fa/disable', { password, code });
+    return data;
+  },
+
   deleteAccount: async (confirmation) => {
     const { data } = await api.delete('/auth/account', { data: confirmation });
     return data;

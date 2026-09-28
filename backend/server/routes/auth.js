@@ -17,6 +17,12 @@ router.get('/profile', authenticate, authController.getProfile);
 router.put('/profile', authenticate, validateProfile, authController.updateProfile);
 router.delete('/account', authLimiter, authenticate, authController.deleteAccount);
 
+// Two-factor sign-in (authenticator app)
+router.post('/2fa/verify', authLimiter, authController.verifyTwoFactor);
+router.post('/2fa/setup', authenticate, authController.setupTwoFactor);
+router.post('/2fa/enable', authLimiter, authenticate, authController.enableTwoFactor);
+router.post('/2fa/disable', authLimiter, authenticate, authController.disableTwoFactor);
+
 // Which social login buttons the frontend should show
 router.get('/providers', (req, res) => {
   res.json({ providers: enabledProviders });

@@ -27,7 +27,7 @@ exports.getUsers = async (req, res, next) => {
     
     const { count, rows } = await User.findAndCountAll({
       where,
-      attributes: { exclude: ['password', 'resetPasswordToken', 'resetPasswordExpires', 'tokenVersion'] },
+      attributes: { exclude: ['password', 'resetPasswordToken', 'resetPasswordExpires', 'tokenVersion', 'twoFactorSecret', 'twoFactorRecoveryCodes', 'twoFactorLastStep'] },
       limit,
       offset,
       order: [['createdAt', 'DESC']]
@@ -47,7 +47,7 @@ exports.getUsers = async (req, res, next) => {
 exports.getUserById = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.params.id, {
-      attributes: { exclude: ['password', 'resetPasswordToken', 'resetPasswordExpires', 'tokenVersion'] },
+      attributes: { exclude: ['password', 'resetPasswordToken', 'resetPasswordExpires', 'tokenVersion', 'twoFactorSecret', 'twoFactorRecoveryCodes', 'twoFactorLastStep'] },
       include: [
         {
           model: Order,

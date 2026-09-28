@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const { Op } = require('sequelize');
 const { sequelize, User, Order, Cart } = require('../models');
 const { issueAuthCookie, clearAuthCookie, publicUser } = require('../utils/authCookie');
+const twoFactor = require('../utils/twoFactor');
 
 exports.register = async (req, res, next) => {
   try {
@@ -49,6 +50,12 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Password is right; the authenticator code comes next
+    if (user.twoFactorEnabled) {
+      twoFactor.issuePendingCookie(res, user);
+      return res.json({ twoFactorRequired: true });
+    }
+
     issueAuthCookie(res, user);
 
     res.json({
@@ -67,6 +74,10 @@ exports.logout = (req, res) => {
 
 // Social login callback: the user was authenticated by passport
 exports.oauthSuccess = (req, res) => {
+  if (req.user.twoFactorEnabled) {
+    twoFactor.issuePendingCookie(res, req.user);
+    return res.redirect(`${process.env.CLIENT_URL}/login?twofactor=1`);
+  }
   issueAuthCookie(res, req.user);
   res.redirect(`${process.env.CLIENT_URL}/`);
 };
@@ -133,6 +144,10 @@ exports.deleteAccount = async (req, res, next) => {
         resetPasswordToken: null,
         resetPasswordExpires: null,
         emailVerified: false,
+        twoFactorEnabled: false,
+        twoFactorSecret: null,
+        twoFactorRecoveryCodes: null,
+        twoFactorLastStep: null,
         active: false,
         tokenVersion: user.tokenVersion + 1
       }, { transaction });
@@ -144,3 +159,94 @@ exports.deleteAccount = async (req, res, next) => {
     next(error);
   }
 };
+
+// --- Two-factor sign-in -------------------------------------------------
+
+// Second step of sign-in: authenticator code or recovery code
+exports.verifyTwoFactor = async (req, res, next) => {
+  try {
+    const pending = twoFactor.readPendingCookie(req);
+    const user = pending && await User.findByPk(pending.id);
+    if (!user || !user.active || !user.twoFactorEnabled || user.tokenVersion !== pending.tv) {
+      twoFactor.clearPendingCookie(res);
+      return res.status(401).json({ error: 'Your sign-in expired. Please sign in again.' });
+    }
+
+    if (!(await twoFactor.verifyAndConsume(user, req.body.code))) {
+      return res.status(401).json({ error: 'That code is not valid. Check your authenticator app and try again.' });
+    }
+
+    twoFactor.clearPendingCookie(res);
+    issueAuthCookie(res, user);
+    res.json({ message: 'Login successful', user: publicUser(user) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Step 1 of turning 2FA on: a secret and QR code (not active until confirmed)
+exports.setupTwoFactor = async (req, res, next) => {
+  try {
+    if (req.user.twoFactorEnabled) {
+      return res.status(400).json({ error: 'Two-factor sign-in is already on' });
+    }
+    const { encryptedSecret, secret, qrCode } = await twoFactor.createSetup(req.user);
+    await req.user.update({ twoFactorSecret: encryptedSecret, twoFactorLastStep: null });
+    res.json({ qrCode, secret });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Step 2: confirm with a code from the app; returns one-time recovery codes
+exports.enableTwoFactor = async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (user.twoFactorEnabled) {
+      return res.status(400).json({ error: 'Two-factor sign-in is already on' });
+    }
+    const step = twoFactor.checkAuthenticatorCode(user, String(req.body.code || '').trim());
+    if (step === null) {
+      return res.status(400).json({ error: 'That code is not valid. Scan the QR code again and enter the current code.' });
+    }
+
+    const recoveryCodes = twoFactor.generateRecoveryCodes();
+    await user.update({
+      twoFactorEnabled: true,
+      twoFactorLastStep: step,
+      twoFactorRecoveryCodes: recoveryCodes.map(twoFactor.hashCode),
+      tokenVersion: user.tokenVersion + 1 // sign out other devices
+    });
+    issueAuthCookie(res, user);
+    res.json({ message: 'Two-factor sign-in is on', recoveryCodes, user: publicUser(user) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Turning 2FA off needs the password (if any) and a current or recovery code
+exports.disableTwoFactor = async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (!user.twoFactorEnabled) {
+      return res.status(400).json({ error: 'Two-factor sign-in is not on' });
+    }
+    if (user.password && !(req.body.password && await bcrypt.compare(req.body.password, user.password))) {
+      return res.status(401).json({ error: 'Password is incorrect' });
+    }
+    if (!(await twoFactor.verifyAndConsume(user, req.body.code))) {
+      return res.status(401).json({ error: 'That code is not valid' });
+    }
+
+    await user.update({
+      twoFactorEnabled: false,
+      twoFactorSecret: null,
+      twoFactorRecoveryCodes: null,
+      twoFactorLastStep: null
+    });
+    res.json({ message: 'Two-factor sign-in is off', user: publicUser(user) });
+  } catch (error) {
+    next(error);
+  }
+};
+

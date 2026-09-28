@@ -56,6 +56,23 @@ const User = sequelize.define('User', {
     allowNull: false,
     defaultValue: 0
   },
+  twoFactorEnabled: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  twoFactorSecret: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  twoFactorRecoveryCodes: {
+    type: DataTypes.JSONB,
+    allowNull: true
+  },
+  twoFactorLastStep: {
+    type: DataTypes.BIGINT,
+    allowNull: true
+  },
   emailVerified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false

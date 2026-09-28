@@ -43,12 +43,29 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password, redirectTo = '/') => {
     try {
       const response = await authService.login(email, password);
+      // Two-factor accounts finish signing in with completeTwoFactor
+      if (response.twoFactorRequired) {
+        return response;
+      }
       setUser(response.user);
       toast.success('Login successful!');
       navigate(redirectTo, { replace: true });
       return response;
     } catch (error) {
       toast.error(error.response?.data?.error || 'Login failed');
+      throw error;
+    }
+  };
+
+  const completeTwoFactor = async (code, redirectTo = '/') => {
+    try {
+      const response = await authService.verifyTwoFactor(code);
+      setUser(response.user);
+      toast.success('Login successful!');
+      navigate(redirectTo, { replace: true });
+      return response;
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'That code is not valid');
       throw error;
     }
   };
@@ -82,6 +99,7 @@ export const AuthProvider = ({ children }) => {
     user,
     setUser,
     login,
+    completeTwoFactor,
     register,
     logout,
     loading,
