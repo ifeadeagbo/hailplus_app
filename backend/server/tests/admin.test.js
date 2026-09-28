@@ -101,6 +101,31 @@ describe('users', () => {
     expect(await Order.findByPk(order.id)).not.toBeNull();
   });
 
+  test('deactivate then reactivate: sign-in blocked, then allowed again', async () => {
+    const admin = await loginAs(await createAdmin());
+    const user = await createUser();
+
+    await admin.delete(`/api/users/${user.id}`);
+    expect((await client().post('/api/auth/login', { email: user.email, password: 'password123' })).status).toBe(401);
+
+    const res = await admin.put(`/api/users/${user.id}`, { active: true });
+    expect(res.status).toBe(200);
+    await loginAs(user);
+  });
+
+  test('admins cannot deactivate themselves', async () => {
+    const adminUser = await createAdmin();
+    const admin = await loginAs(adminUser);
+    expect((await admin.delete(`/api/users/${adminUser.id}`)).status).toBe(400);
+  });
+
+  test('user search finds by email', async () => {
+    const admin = await loginAs(await createAdmin());
+    await createUser({ email: 'findme-123@example.com' });
+    const res = await admin.get('/api/users?search=findme');
+    expect(res.body.users.map(u => u.email)).toEqual(['findme-123@example.com']);
+  });
+
   test('the database refuses to hard-delete a user with orders', async () => {
     const order = await paidOrder(await createProduct());
     await expect(User.destroy({ where: { id: order.userId } })).rejects.toThrow(/foreign key/);

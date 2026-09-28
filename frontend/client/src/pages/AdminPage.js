@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AdminDashboard from '../components/admin/AdminDashboard';
@@ -12,9 +12,14 @@ const AdminPage = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
+  const [userSearch, setUserSearch] = useState('');
+  // The search box applies on submit, not on every keystroke
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [userPage, setUserPage] = useState(1);
+  const [userPages, setUserPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user: currentUser } = useAuth();
 
   // Check admin access
   useEffect(() => {
@@ -24,14 +29,31 @@ const AdminPage = () => {
     }
   }, [isAdmin, navigate]);
 
-  // Fetch data when tab changes
+  // Fetch all users (admin-only endpoint with search and pages)
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/users', { params: { search: appliedSearch || undefined, page: userPage } });
+      setUsers(response.data.users || []);
+      setUserPages(response.data.totalPages || 1);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  }, [appliedSearch, userPage]);
+
+  // Fetch data when the tab (or the users page/search) changes
   useEffect(() => {
     if (activeTab === 'orders') {
       fetchOrders();
     } else if (activeTab === 'users') {
       fetchUsers();
     }
-  }, [activeTab]);
+    // fetchOrders only uses state setters
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, fetchUsers]);
 
   // Fetch all orders
   const fetchOrders = async () => {
@@ -47,20 +69,6 @@ const AdminPage = () => {
     }
   };
 
-  // Fetch all users
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/admin/users');
-      setUsers(response.data.users || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast.error('Failed to load users');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Update order status
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
@@ -69,6 +77,24 @@ const AdminPage = () => {
       fetchOrders(); // Refresh orders
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to update order status');
+    }
+  };
+
+  // Deactivating signs the user out everywhere and blocks sign-in;
+  // their orders are kept. Reactivating restores access.
+  const setUserActive = async (targetUser, active) => {
+    const action = active ? 'Reactivate' : 'Deactivate';
+    if (!window.confirm(`${action} ${targetUser.email}?`)) return;
+    try {
+      if (active) {
+        await api.put(`/users/${targetUser.id}`, { active: true });
+      } else {
+        await api.delete(`/users/${targetUser.id}`);
+      }
+      toast.success(`User ${active ? 'reactivated' : 'deactivated'}`);
+      fetchUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.error || `Failed to ${action.toLowerCase()} user`);
     }
   };
 
@@ -245,6 +271,20 @@ const AdminPage = () => {
             {activeTab === 'users' && (
               <div>
                 <h2 className="text-2xl font-bold mb-4">User Management</h2>
+
+                <form
+                  onSubmit={(e) => { e.preventDefault(); setUserPage(1); setAppliedSearch(userSearch.trim()); }}
+                  className="flex gap-2 mb-4"
+                >
+                  <input
+                    type="search"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder="Search by name or email"
+                    className="flex-1 border px-3 py-2 text-sm focus:outline-none focus:border-ink"
+                  />
+                  <button type="submit" className="btn-dark px-5 py-2">Search</button>
+                </form>
                 
                 {loading ? (
                   <LoadingSpinner />
@@ -263,6 +303,9 @@ const AdminPage = () => {
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                             Role
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Status
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                             Joined
@@ -290,23 +333,58 @@ const AdminPage = () => {
                                 {user.role}
                               </span>
                             </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {user.active ? 'Active' : 'Deactivated'}
+                              </span>
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                               {new Date(user.createdAt).toLocaleDateString()}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
-                              <select
-                                value={user.role}
-                                onChange={(e) => updateUserRole(user.id, e.target.value)}
-                                className="border rounded px-2 py-1 text-sm"
-                              >
-                                <option value="customer">Customer</option>
-                                <option value="admin">Admin</option>
-                              </select>
+                              {user.id === currentUser?.id ? (
+                                <span className="text-gray-400">You</span>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <select
+                                    value={user.role}
+                                    onChange={(e) => updateUserRole(user.id, e.target.value)}
+                                    className="border rounded px-2 py-1 text-sm"
+                                  >
+                                    <option value="customer">Customer</option>
+                                    <option value="admin">Admin</option>
+                                  </select>
+                                  <button
+                                    onClick={() => setUserActive(user, !user.active)}
+                                    className={`px-3 py-1 text-xs font-semibold border ${
+                                      user.active
+                                        ? 'border-red-300 text-red-700 hover:bg-red-50'
+                                        : 'border-green-300 text-green-700 hover:bg-green-50'
+                                    }`}
+                                  >
+                                    {user.active ? 'Deactivate' : 'Reactivate'}
+                                  </button>
+                                </div>
+                              )}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+
+                {userPages > 1 && (
+                  <div className="flex items-center justify-end gap-3 mt-4 text-sm">
+                    <button onClick={() => setUserPage(p => p - 1)} disabled={userPage === 1} className="border px-3 py-1 disabled:opacity-40">
+                      Previous
+                    </button>
+                    <span>Page {userPage} of {userPages}</span>
+                    <button onClick={() => setUserPage(p => p + 1)} disabled={userPage === userPages} className="border px-3 py-1 disabled:opacity-40">
+                      Next
+                    </button>
                   </div>
                 )}
               </div>
