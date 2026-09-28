@@ -149,6 +149,66 @@ describe('rate limiting', () => {
   });
 });
 
+describe('deleting an account', () => {
+  const { Order } = require('../models');
+
+  test('erases personal details, signs out, blocks sign-in, keeps order records', async () => {
+    const user = await createUser({ name: 'Ada Buyer' });
+    const order = await Order.create({
+      userId: user.id, items: [], totalAmount: '10.00', status: 'delivered', paymentMethod: 'card',
+      shippingAddress: {}, billingAddress: {}
+    });
+    const c = await loginAs(user);
+
+    const res = await c.agent.delete('/api/auth/account').set('X-Requested-With', 'XMLHttpRequest').send({ password: 'password123' });
+    expect(res.status).toBe(200);
+
+    await user.reload();
+    expect(user).toMatchObject({ name: 'Deleted customer', active: false, password: null });
+    expect(user.email).toBe(`deleted-${user.id}@deleted.invalid`);
+    expect((await c.get('/api/auth/profile')).status).toBe(401);
+    expect(await Order.findByPk(order.id)).not.toBeNull();
+    // The original email can sign up again
+    const again = await client().post('/api/auth/register', { email: 'ada-new@example.com', password: 'goodpass123', name: 'Ada' });
+    expect(again.status).toBe(201);
+  });
+
+  test('needs the correct password', async () => {
+    const c = await loginAs(await createUser());
+    const res = await c.agent.delete('/api/auth/account').set('X-Requested-With', 'XMLHttpRequest').send({ password: 'wrongpass1' });
+    expect(res.status).toBe(401);
+  });
+
+  test('social sign-in accounts confirm by typing DELETE', async () => {
+    const user = await createUser({ password: null, provider: 'google', googleId: 'g-del' });
+    const { issueAuthCookie } = require('../utils/authCookie');
+    let cookie;
+    issueAuthCookie({ cookie: (name, value) => { cookie = `${name}=${value}`; } }, user);
+    const del = (body) => request(app).delete('/api/auth/account').set('Cookie', cookie).set('X-Requested-With', 'XMLHttpRequest').send(body);
+
+    expect((await del({ confirm: 'yes' })).status).toBe(400);
+    expect((await del({ confirm: 'DELETE' })).status).toBe(200);
+  });
+
+  test('blocked while an order is in progress', async () => {
+    const user = await createUser();
+    await Order.create({
+      userId: user.id, items: [], totalAmount: '10.00', status: 'shipped', paymentMethod: 'card',
+      shippingAddress: {}, billingAddress: {}
+    });
+    const c = await loginAs(user);
+    const res = await c.agent.delete('/api/auth/account').set('X-Requested-With', 'XMLHttpRequest').send({ password: 'password123' });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/orders in progress/);
+  });
+
+  test('the only admin cannot delete their account', async () => {
+    const c = await loginAs(await createUser({ role: 'admin' }));
+    const res = await c.agent.delete('/api/auth/account').set('X-Requested-With', 'XMLHttpRequest').send({ password: 'password123' });
+    expect(res.status).toBe(409);
+  });
+});
+
 describe('breached passwords', () => {
   const crypto = require('crypto');
   const sha1 = (text) => crypto.createHash('sha1').update(text).digest('hex').toUpperCase();

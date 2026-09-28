@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
@@ -88,8 +88,74 @@ const ChangePasswordForm = () => {
   );
 };
 
+// Erases the customer's personal details; order records are kept for tax
+const DeleteAccount = ({ user, onDeleted }) => {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const usesPassword = user.provider === 'local';
+
+  const handleDelete = async (e) => {
+    e.preventDefault();
+    if (!window.confirm('Delete your account permanently? This cannot be undone.')) return;
+    try {
+      setDeleting(true);
+      await authService.deleteAccount(usesPassword ? { password: value } : { confirm: value });
+      toast.success('Your account has been deleted');
+      onDeleted();
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Could not delete your account');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} className="text-sm text-red-700 underline hover:text-red-900">
+        Delete my account
+      </button>
+    );
+  }
+
+  return (
+    <form onSubmit={handleDelete} className="space-y-4">
+      <p className="text-sm text-gray-700">
+        This permanently removes your name, email address and sign-in details, and signs you out on every device.
+        Records of past orders are kept, without your login, because UK tax rules require us to keep sales records.
+        You can't delete your account while an order is still being processed or delivered.
+      </p>
+      <div>
+        <label className="block text-sm font-medium mb-2">
+          {usesPassword ? 'Enter your password to confirm' : 'Type DELETE to confirm'}
+        </label>
+        <input
+          type={usesPassword ? 'password' : 'text'}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          autoComplete={usesPassword ? 'current-password' : 'off'}
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+        />
+      </div>
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={deleting || !value}
+          className="px-6 py-2 bg-red-700 text-white text-xs font-semibold uppercase tracking-label hover:bg-red-800 disabled:opacity-50"
+        >
+          {deleting ? 'Deleting...' : 'Delete my account'}
+        </button>
+        <button type="button" onClick={() => { setOpen(false); setValue(''); }} className="btn-outline px-6 py-2">
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+};
+
 const AccountPage = () => {
   const { user, setUser } = useAuth();
+  const navigate = useNavigate();
   const usesPassword = user.provider === 'local';
 
   return (
@@ -113,6 +179,14 @@ const AccountPage = () => {
             You sign in with {user.provider.charAt(0).toUpperCase() + user.provider.slice(1)}, so there is no password to change here.
           </p>
         )}
+      </section>
+
+      <section className="bg-white rounded-lg shadow p-6 border border-red-100">
+        <h2 className="text-xl font-bold mb-4">Delete account</h2>
+        <DeleteAccount
+          user={user}
+          onDeleted={() => { setUser(null); navigate('/'); }}
+        />
       </section>
     </div>
   );

@@ -15,6 +15,7 @@ router.post('/logout', authController.logout);
 // Profile routes
 router.get('/profile', authenticate, authController.getProfile);
 router.put('/profile', authenticate, validateProfile, authController.updateProfile);
+router.delete('/account', authLimiter, authenticate, authController.deleteAccount);
 
 // Which social login buttons the frontend should show
 router.get('/providers', (req, res) => {

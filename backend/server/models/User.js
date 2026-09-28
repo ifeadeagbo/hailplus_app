@@ -76,7 +76,8 @@ const User = sequelize.define('User', {
       }
     },
     beforeUpdate: async (user) => {
-      if (user.changed('password')) {
+      // Skipped when the password is erased (account deletion)
+      if (user.changed('password') && user.password) {
         user.password = await bcrypt.hash(user.password, 10);
       }
     }

@@ -42,8 +42,9 @@ const PrivacyPage = () => (
 
     <Section title="How long we keep it">
       <p>
-        We keep your account information while your account is active. Order records are kept for
-        [PLACEHOLDER: e.g. 7 years] to meet tax and accounting requirements, even if you close your account.
+        We keep your account information while your account is active. If you delete your account, we erase
+        your name, email address and sign-in details straight away. Order records (items, prices and delivery
+        addresses) are kept for 6 years, as UK tax rules require, even after you delete your account.
       </p>
     </Section>
 
@@ -51,7 +52,8 @@ const PrivacyPage = () => (
       <p>
         You can view and update your name in <Link to="/account" className="text-blue-600 hover:underline">My Account</Link> and
         see your order history in <Link to="/orders" className="text-blue-600 hover:underline">My Orders</Link>.
-        To request a copy of your data, correct it, or close your account, email <SupportEmail />.
+        You can delete your account yourself at any time from My Account. To request a copy of your data or
+        correct it, email <SupportEmail />.
         Under UK data protection law (UK GDPR) you also have the right to object to or restrict how we use your
         data, and to complain to the Information Commissioner's Office
         (<a className="text-blue-600 hover:underline" href="https://ico.org.uk/make-a-complaint/" target="_blank" rel="noopener noreferrer">ico.org.uk</a>).

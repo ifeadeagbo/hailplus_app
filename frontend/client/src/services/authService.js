@@ -31,6 +31,11 @@ const authService = {
     return data;
   },
 
+  deleteAccount: async (confirmation) => {
+    const { data } = await api.delete('/auth/account', { data: confirmation });
+    return data;
+  },
+
   requestPasswordReset: async (email) => {
     const { data } = await api.post('/public/password-reset', { email });
     return data;

@@ -337,7 +337,7 @@ const AdminPage = () => {
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                                 user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                               }`}>
-                                {user.active ? 'Active' : 'Deactivated'}
+                                {user.provider === 'deleted' ? 'Deleted' : user.active ? 'Active' : 'Deactivated'}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -346,6 +346,8 @@ const AdminPage = () => {
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                               {user.id === currentUser?.id ? (
                                 <span className="text-gray-400">You</span>
+                              ) : user.provider === 'deleted' ? (
+                                <span className="text-gray-400">Deleted by customer</span>
                               ) : (
                                 <div className="flex items-center gap-2">
                                   <select
