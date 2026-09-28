@@ -1,4 +1,5 @@
 const { body, param, query, validationResult } = require('express-validator');
+const { isBreached } = require('./breachedPasswords');
 
 // Common validation chains
 // Lowercased but otherwise kept as typed (normalizeEmail strips dots from
@@ -15,7 +16,13 @@ const passwordRules = (field) => body(field)
   .matches(/\d/)
   .withMessage('Password must contain at least one number')
   .matches(/[a-zA-Z]/)
-  .withMessage('Password must contain at least one letter');
+  .withMessage('Password must contain at least one letter')
+  .bail()
+  .custom(async (value) => {
+    if (await isBreached(value)) {
+      throw new Error('This password has appeared in a data breach, so it is easy for attackers to guess. Please choose a different one.');
+    }
+  });
 
 const validatePassword = passwordRules('password');
 

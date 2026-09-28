@@ -149,6 +149,55 @@ describe('rate limiting', () => {
   });
 });
 
+describe('breached passwords', () => {
+  const crypto = require('crypto');
+  const sha1 = (text) => crypto.createHash('sha1').update(text).digest('hex').toUpperCase();
+
+  beforeEach(() => { process.env.TEST_PWNED_CHECK = '1'; });
+  afterEach(() => {
+    delete process.env.TEST_PWNED_CHECK;
+    jest.restoreAllMocks();
+  });
+
+  // Simulates the Pwned Passwords range API: only the given passwords are "breached"
+  const mockPwned = (...breached) => jest.spyOn(global, 'fetch').mockImplementation(async (url) => {
+    const prefix = url.split('/').pop();
+    const lines = breached.map(sha1).filter(h => h.startsWith(prefix)).map(h => `${h.slice(5)}:1234`);
+    return { ok: true, text: async () => ['0000000000000000000000000000000000A:0', ...lines].join('\r\n') };
+  });
+
+  test('sign-up rejects a password found in a breach, sending only a hash prefix', async () => {
+    const fetchMock = mockPwned('leaked123pass');
+    const res = await client().post('/api/auth/register', { email: 'b1@example.com', password: 'leaked123pass', name: 'Breach Test' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/data breach/);
+    const url = fetchMock.mock.calls[0][0];
+    expect(url).toBe(`https://api.pwnedpasswords.com/range/${sha1('leaked123pass').slice(0, 5)}`);
+    expect(url).not.toContain('leaked123pass');
+  });
+
+  test('a password not in any breach is accepted', async () => {
+    mockPwned('some-other-leak1');
+    const res = await client().post('/api/auth/register', { email: 'b2@example.com', password: 'unique-pass-9x', name: 'Breach Test' });
+    expect(res.status).toBe(201);
+  });
+
+  test('if the breach service is down, sign-up still works', async () => {
+    jest.spyOn(global, 'fetch').mockRejectedValue(new Error('network down'));
+    const res = await client().post('/api/auth/register', { email: 'b3@example.com', password: 'unique-pass-9x', name: 'Breach Test' });
+    expect(res.status).toBe(201);
+  });
+
+  test('changing to a breached password is rejected', async () => {
+    const c = await loginAs(await createUser());
+    mockPwned('leaked123pass');
+    const res = await c.put('/api/users/change-password', { currentPassword: 'password123', newPassword: 'leaked123pass' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/data breach/);
+  });
+});
+
 describe('sign-up limit', () => {
   test('an IP can create 10 accounts an hour, then is blocked', async () => {
     const signUp = (i) => request(app)
