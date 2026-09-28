@@ -3,12 +3,12 @@ const router = express.Router();
 const passport = require('passport');
 const authController = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
-const { authLimiter } = require('../middleware/rateLimiter');
+const { authLimiter, signupLimiter } = require('../middleware/rateLimiter');
 const { validateRegister, validateLogin, validateProfile } = require('../utils/validators');
 const { enabledProviders } = require('../config/passport');
 
 // Local auth routes
-router.post('/register', authLimiter, validateRegister, authController.register);
+router.post('/register', signupLimiter, authLimiter, validateRegister, authController.register);
 router.post('/login', authLimiter, validateLogin, authController.login);
 router.post('/logout', authController.logout);
 

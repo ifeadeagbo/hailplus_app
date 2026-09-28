@@ -2,9 +2,12 @@ jest.mock('../config/stripe', () => require('./helpers/stripeMock'));
 jest.mock('../utils/emailService');
 
 const { User } = require('../models');
-const { client, resetDb, createUser, loginAs, closeAll, request, app } = require('./helpers/app');
+const { client, resetDb, resetRateLimits, createUser, loginAs, closeAll, request, app } = require('./helpers/app');
 
-beforeEach(resetDb);
+beforeEach(async () => {
+  await resetDb();
+  resetRateLimits();
+});
 afterAll(closeAll);
 
 describe('registration', () => {
@@ -143,6 +146,23 @@ describe('rate limiting', () => {
     const blocked = await attempt();
     expect(blocked.status).toBe(429);
     expect(blocked.body.error).toMatch(/Too many/);
+  });
+});
+
+describe('sign-up limit', () => {
+  test('an IP can create 10 accounts an hour, then is blocked', async () => {
+    const signUp = (i) => request(app)
+      .post('/api/auth/register')
+      .set('X-Requested-With', 'XMLHttpRequest')
+      .set('X-Test-Rate-Limit', 'on')
+      .send({ email: `bulk-${i}@example.com`, password: 'goodpass123', name: 'Bulk User' });
+
+    for (let i = 0; i < 10; i++) {
+      expect((await signUp(i)).status).toBe(201);
+    }
+    const blocked = await signUp(10);
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.error).toMatch(/Too many accounts/);
   });
 });
 

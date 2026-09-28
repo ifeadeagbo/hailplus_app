@@ -23,6 +23,15 @@ const client = () => {
   };
 };
 
+// Clears rate-limit counters so one test's deliberate lockout can't leak into
+// the next (limiters are keyed by IP, and every test request comes from localhost)
+const resetRateLimits = () => {
+  const limiters = require('../../middleware/rateLimiter');
+  for (const limiter of Object.values(limiters)) {
+    for (const ip of ['127.0.0.1', '::1', '::ffff:127.0.0.1']) limiter.resetKey(ip);
+  }
+};
+
 const resetDb = () =>
   sequelize.query('TRUNCATE "Carts", "Orders", "Products", "Users", "session" CASCADE');
 
@@ -74,6 +83,7 @@ module.exports = {
   AJAX,
   client,
   resetDb,
+  resetRateLimits,
   createUser,
   createAdmin,
   createProduct,

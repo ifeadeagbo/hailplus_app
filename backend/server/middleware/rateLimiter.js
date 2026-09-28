@@ -23,6 +23,15 @@ const authLimiter = rateLimit({
   skipSuccessfulRequests: true,
 });
 
+// New accounts per IP (stops bots mass-creating accounts; failed attempts
+// are already limited by authLimiter)
+const signupLimiter = rateLimit({
+  skip,
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // limit each IP to 10 new accounts per hour
+  message: { error: 'Too many accounts created from this network. Please try again later.' },
+});
+
 // Rate limit for order creation
 const orderLimiter = rateLimit({
   skip,
@@ -42,6 +51,7 @@ const passwordResetLimiter = rateLimit({
 module.exports = {
   apiLimiter,
   authLimiter,
+  signupLimiter,
   orderLimiter,
   passwordResetLimiter
 };
