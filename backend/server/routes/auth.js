@@ -3,7 +3,7 @@ const router = express.Router();
 const passport = require('passport');
 const authController = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
-const { authLimiter, signupLimiter } = require('../middleware/rateLimiter');
+const { authLimiter, signupLimiter, passwordResetLimiter } = require('../middleware/rateLimiter');
 const { validateRegister, validateLogin, validateProfile } = require('../utils/validators');
 const { enabledProviders } = require('../config/passport');
 
@@ -16,6 +16,10 @@ router.post('/logout', authController.logout);
 router.get('/profile', authenticate, authController.getProfile);
 router.put('/profile', authenticate, validateProfile, authController.updateProfile);
 router.delete('/account', authLimiter, authenticate, authController.deleteAccount);
+
+// Email confirmation
+router.post('/verify-email/:token', passwordResetLimiter, authController.verifyEmail);
+router.post('/verify-email-resend', passwordResetLimiter, authenticate, authController.resendVerification);
 
 // Two-factor sign-in (authenticator app)
 router.post('/2fa/verify', authLimiter, authController.verifyTwoFactor);

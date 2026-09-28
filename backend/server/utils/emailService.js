@@ -138,6 +138,47 @@ exports.sendOrderConfirmation = async (email, order) => {
   }
 };
 
+exports.sendEmailVerification = async (email, name, token) => {
+  const verifyUrl = `${process.env.CLIENT_URL}/verify-email/${token}`;
+  const mailOptions = {
+    from: FROM,
+    to: email,
+    subject: `Confirm your email for ${STORE_NAME}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 10px; }
+          .button { display: inline-block; padding: 12px 30px; background: #1a1a1a; color: white; text-decoration: none; border-radius: 2px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="content">
+            <p style="font-size: 20px; font-weight: bold;">${escapeHtml(STORE_NAME)}</p>
+            <p>Hi ${escapeHtml(name || 'there')},</p>
+            <p>Thanks for creating an account. Please confirm this is your email address:</p>
+            <center><a href="${verifyUrl}" class="button">Confirm my email</a></center>
+            <p style="word-break: break-all; font-size: 13px;">Or open this link: ${verifyUrl}</p>
+            <p style="font-size: 13px; color: #777;">The link works for 7 days. If you didn't create an account, you can ignore this email.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  };
+
+  try {
+    await deliver(mailOptions);
+    logger.info('Email verification sent');
+  } catch (error) {
+    logger.error('Error sending email', error);
+  }
+};
+
 exports.sendPasswordReset = async (email, token) => {
   const resetUrl = `${process.env.CLIENT_URL}/reset-password/${token}`;
   

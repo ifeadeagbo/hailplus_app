@@ -3,6 +3,22 @@ const { Op } = require('sequelize');
 const { sequelize, User, Order, Cart } = require('../models');
 const { issueAuthCookie, clearAuthCookie, publicUser } = require('../utils/authCookie');
 const twoFactor = require('../utils/twoFactor');
+const crypto = require('crypto');
+const emailService = require('../utils/emailService');
+
+const VERIFICATION_DAYS = 7;
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+// Emails a fresh confirmation link (the token is stored only as a hash)
+const sendVerification = async (user) => {
+  const token = crypto.randomBytes(32).toString('hex');
+  await user.update({
+    emailVerificationToken: hashToken(token),
+    emailVerificationExpires: new Date(Date.now() + VERIFICATION_DAYS * 24 * 60 * 60 * 1000)
+  });
+  // Not awaited: sign-up must not wait on the mail server
+  emailService.sendEmailVerification(user.email, user.name, token);
+};
 
 exports.register = async (req, res, next) => {
   try {
@@ -20,6 +36,7 @@ exports.register = async (req, res, next) => {
       name
     });
 
+    await sendVerification(user);
     issueAuthCookie(res, user);
 
     res.status(201).json({
@@ -245,6 +262,39 @@ exports.disableTwoFactor = async (req, res, next) => {
       twoFactorLastStep: null
     });
     res.json({ message: 'Two-factor sign-in is off', user: publicUser(user) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// --- Email confirmation ------------------------------------------------
+
+// Opened from the link in the confirmation email (no sign-in needed)
+exports.verifyEmail = async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      where: {
+        emailVerificationToken: hashToken(req.params.token),
+        emailVerificationExpires: { [Op.gt]: new Date() }
+      }
+    });
+    if (!user) {
+      return res.status(400).json({ error: 'This link is invalid or has expired. Sign in and request a new one.' });
+    }
+    await user.update({ emailVerified: true, emailVerificationToken: null, emailVerificationExpires: null });
+    res.json({ message: 'Email address confirmed' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.resendVerification = async (req, res, next) => {
+  try {
+    if (req.user.emailVerified) {
+      return res.status(400).json({ error: 'Your email address is already confirmed' });
+    }
+    await sendVerification(req.user);
+    res.json({ message: `We've sent a new link to ${req.user.email}` });
   } catch (error) {
     next(error);
   }

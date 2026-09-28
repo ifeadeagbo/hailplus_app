@@ -125,7 +125,7 @@ exports.getAllUsers = async (req, res, next) => {
     
     const { count, rows } = await User.findAndCountAll({
       where,
-      attributes: { exclude: ['password', 'resetPasswordToken', 'resetPasswordExpires', 'tokenVersion', 'twoFactorSecret', 'twoFactorRecoveryCodes', 'twoFactorLastStep'] },
+      attributes: { exclude: ['password', 'resetPasswordToken', 'resetPasswordExpires', 'tokenVersion', 'twoFactorSecret', 'twoFactorRecoveryCodes', 'twoFactorLastStep', 'emailVerificationToken', 'emailVerificationExpires'] },
       limit,
       offset,
       order: [['createdAt', 'DESC']]

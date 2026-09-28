@@ -333,6 +333,9 @@ const AdminPage = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                               {user.email}
+                              <span className={`block text-xs ${user.emailVerified ? 'text-green-700' : 'text-gray-400'}`}>
+                                {user.emailVerified ? '✓ email confirmed' : 'email not confirmed'}
+                              </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${

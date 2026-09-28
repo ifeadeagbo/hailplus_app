@@ -11,6 +11,7 @@ import PrivateRoute from './components/common/PrivateRoute';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import VerifyEmailBanner from './components/common/VerifyEmailBanner';
 
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -31,6 +32,7 @@ import CookiesPage from './pages/legal/CookiesPage';
 import ReturnsPage from './pages/legal/ReturnsPage';
 import FaqPage from './pages/legal/FaqPage';
 import ContactPage from './pages/ContactPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
@@ -46,6 +48,7 @@ function App() {
           <CartProvider>
             <div className="App">
               <Header />
+              <VerifyEmailBanner />
               <main className="main-content">
                 <ErrorBoundary>
                   <Routes>
@@ -63,6 +66,7 @@ function App() {
                     <Route path="/returns" element={<ReturnsPage />} />
                     <Route path="/faq" element={<FaqPage />} />
                     <Route path="/contact" element={<ContactPage />} />
+                    <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
                     <Route
                       path="/account"
                       element={

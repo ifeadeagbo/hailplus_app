@@ -149,6 +149,61 @@ describe('rate limiting', () => {
   });
 });
 
+describe('email confirmation', () => {
+  const emailService = require('../utils/emailService');
+  const tokenFromEmail = () => emailService.sendEmailVerification.mock.calls.at(-1)[2];
+
+  beforeEach(() => jest.clearAllMocks());
+
+  test('sign-up emails a confirmation link; the account works straight away', async () => {
+    const c = client();
+    const res = await c.post('/api/auth/register', { email: 'verify-me@example.com', password: 'goodpass123', name: 'Vera' });
+    expect(res.status).toBe(201);
+    expect(res.body.user.emailVerified).toBe(false);
+    expect(emailService.sendEmailVerification).toHaveBeenCalledWith('verify-me@example.com', 'Vera', expect.stringMatching(/^[a-f0-9]{64}$/));
+    expect((await c.get('/api/auth/profile')).status).toBe(200);
+  });
+
+  test('the link confirms the email once, and only the hash is stored', async () => {
+    const c = client();
+    await c.post('/api/auth/register', { email: 'verify-2@example.com', password: 'goodpass123', name: 'Vera' });
+    const token = tokenFromEmail();
+    const stored = await User.findOne({ where: { email: 'verify-2@example.com' } });
+    expect(stored.emailVerificationToken).not.toBe(token);
+
+    expect((await client().post(`/api/auth/verify-email/${token}`)).status).toBe(200);
+    expect((await c.get('/api/auth/profile')).body.emailVerified).toBe(true);
+    expect((await client().post(`/api/auth/verify-email/${token}`)).status).toBe(400);
+  });
+
+  test('expired and made-up links are rejected', async () => {
+    await client().post('/api/auth/register', { email: 'verify-3@example.com', password: 'goodpass123', name: 'Vera' });
+    const token = tokenFromEmail();
+    await User.update({ emailVerificationExpires: new Date(Date.now() - 1000) }, { where: { email: 'verify-3@example.com' } });
+
+    expect((await client().post(`/api/auth/verify-email/${token}`)).status).toBe(400);
+    expect((await client().post(`/api/auth/verify-email/${'a'.repeat(64)}`)).status).toBe(400);
+  });
+
+  test('resend issues a new link and the old one stops working', async () => {
+    const c = client();
+    await c.post('/api/auth/register', { email: 'verify-4@example.com', password: 'goodpass123', name: 'Vera' });
+    const oldToken = tokenFromEmail();
+
+    const res = await c.post('/api/auth/verify-email-resend');
+    expect(res.status).toBe(200);
+    const newToken = tokenFromEmail();
+    expect(newToken).not.toBe(oldToken);
+    expect((await client().post(`/api/auth/verify-email/${oldToken}`)).status).toBe(400);
+    expect((await client().post(`/api/auth/verify-email/${newToken}`)).status).toBe(200);
+  });
+
+  test('resend is refused once confirmed', async () => {
+    const c = await loginAs(await createUser({ emailVerified: true }));
+    expect((await c.post('/api/auth/verify-email-resend')).status).toBe(400);
+  });
+});
+
 describe('deleting an account', () => {
   const { Order } = require('../models');
 

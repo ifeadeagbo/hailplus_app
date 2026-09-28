@@ -31,6 +31,16 @@ const authService = {
     return data;
   },
 
+  verifyEmail: async (token) => {
+    const { data } = await api.post(`/auth/verify-email/${token}`);
+    return data;
+  },
+
+  resendVerification: async () => {
+    const { data } = await api.post('/auth/verify-email-resend');
+    return data;
+  },
+
   // Two-factor sign-in
   verifyTwoFactor: async (code) => {
     const { data } = await api.post('/auth/2fa/verify', { code });
