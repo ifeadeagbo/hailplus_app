@@ -45,7 +45,7 @@ const faqs = [
   },
   {
     q: 'Where do you ship?',
-    a: <>[PLACEHOLDER: countries/regions you ship to and typical delivery times.]</>
+    a: <>We deliver to addresses in the United Kingdom only. Orders are usually dispatched within {store.dispatchDays} working days and arrive {store.deliveryDays} working days after that.</>
   }
 ];
 

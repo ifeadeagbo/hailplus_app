@@ -27,14 +27,14 @@ const PrivacyPage = () => (
         <li>To send emails about your orders and account (order confirmations, shipping updates, refunds, password resets).</li>
         <li>To prevent fraud and abuse, and to comply with legal and tax obligations.</li>
       </ul>
-      <p>We do not sell your personal information. [PLACEHOLDER: if you add a newsletter or marketing emails, describe them here and how to unsubscribe.]</p>
+      <p>We do not sell your personal information, and we do not send marketing emails or newsletters.</p>
     </Section>
 
     <Section title="Who we share it with">
       <ul className="list-disc pl-6 space-y-2">
         <li><strong>Stripe</strong>, to process payments and prevent fraud (<a className="text-blue-600 hover:underline" href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">Stripe's privacy policy</a>).</li>
-        <li><strong>Our email provider</strong>, to deliver order and account emails. [PLACEHOLDER: name your email provider.]</li>
-        <li><strong>Our hosting provider</strong>, which stores the website and database. [PLACEHOLDER: name your hosting provider and where data is stored.]</li>
+        <li><strong>Resend</strong>, our email provider, to deliver order and account emails.</li>
+        <li><strong>Render</strong>, which hosts the website on servers in Germany, and <strong>Supabase</strong>, which hosts the database on servers in Ireland.</li>
         <li><strong>Shipping carriers</strong>, who receive your name and shipping address to deliver your order.</li>
         <li>Authorities, when required by law.</li>
       </ul>

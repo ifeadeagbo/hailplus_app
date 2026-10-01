@@ -27,16 +27,24 @@ const ReturnsPage = () => (
         You can return most items within {store.returnWindowDays} days of delivery. Items must be unused, in their
         original condition and packaging, with proof of purchase.
       </p>
-      <p>[PLACEHOLDER: list any items that cannot be returned, e.g. opened software, personal care items, final-sale items.]</p>
+      <p>
+        Unless they are faulty, we cannot accept returns of items made or personalised to your order, or of
+        sealed items that have been opened and cannot be resold for hygiene reasons (such as underwear,
+        earphones and personal care products).
+      </p>
       <p>To start a return, email <SupportEmail /> with your order number (shown in My Orders and in your confirmation email).
         We'll reply with return instructions.</p>
-      <p>[PLACEHOLDER: who pays return shipping, e.g. "Return shipping is free for damaged or incorrect items; otherwise it is paid by the customer."]</p>
+      <p>
+        Return postage is free for faulty, damaged or incorrect items. For any other return, you pay the
+        cost of sending the item back.
+      </p>
     </Section>
 
     <Section title="Damaged or wrong items">
       <p>
-        If your order arrives damaged or isn't what you ordered, email <SupportEmail /> within [PLACEHOLDER: e.g. 7] days
-        of delivery with your order number and a photo, and we'll make it right.
+        If your order arrives faulty, damaged or isn't what you ordered, email <SupportEmail /> as soon as you can
+        with your order number and a photo. If you tell us within 30 days of delivery, you can choose a full
+        refund. After that, we will repair or replace the item, or refund you if that isn't possible.
       </p>
     </Section>
 
@@ -45,7 +53,11 @@ const ReturnsPage = () => (
         Once we receive and inspect your return, we refund the original payment method. Refunds usually
         appear within 5–10 business days, depending on your bank. You'll get an email when the refund is issued.
       </p>
-      <p>[PLACEHOLDER: whether original shipping costs are refunded.]</p>
+      <p>
+        We also refund the standard delivery charge you paid if the item was faulty, damaged or incorrect,
+        or if you cancel the whole order within 14 days of receiving it. For other returns, the original
+        delivery charge is not refunded.
+      </p>
     </Section>
   </InfoPage>
 );

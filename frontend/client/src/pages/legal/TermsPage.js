@@ -39,13 +39,25 @@ const TermsPage = () => (
         and <Link to="/faq" className="text-blue-600 hover:underline">FAQ</Link>. Nothing in these terms
         limits rights you have under consumer protection law.
       </p>
-      <p>[PLACEHOLDER: where you ship to and typical delivery times.]</p>
+      <p>
+        We deliver to addresses in the United Kingdom only. Orders are usually dispatched
+        within {store.dispatchDays} working days and arrive {store.deliveryDays} working days after that.
+        These are estimates; if your order has not arrived within 30 days, you can cancel it for a full refund.
+      </p>
     </Section>
 
     <Section title="Liability">
       <p>
-        [PLACEHOLDER: limitation of liability clause. Have this reviewed by a lawyer for your country;
-        consumer law often limits what can be excluded.]
+        If we fail to comply with these terms, we are responsible for loss or damage you suffer that is a
+        foreseeable result of our failure. We are not responsible for loss that could not reasonably have
+        been foreseen, for business losses (we supply goods for private use only), or for delays caused by
+        events outside our control.
+      </p>
+      <p>
+        We do not exclude or limit our liability where it would be unlawful to do so. This includes
+        liability for death or personal injury caused by our negligence, for fraud, and for breach of your
+        legal rights as a consumer, including the right to goods that are as described and of satisfactory
+        quality.
       </p>
     </Section>
 

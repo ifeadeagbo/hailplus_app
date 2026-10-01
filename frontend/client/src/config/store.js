@@ -1,6 +1,6 @@
 // Your business details, shown in the header, footer and legal pages.
-// Replace every value in [BRACKETS] before launch. The legal pages are
-// starting-point drafts: have them reviewed for your business and country.
+// The legal pages are written for a UK store: have them reviewed before
+// trading for real.
 const store = {
   name: 'Hailplus',
   domain: 'hailplus.co.uk',
@@ -13,6 +13,9 @@ const store = {
   // Governing law for the Terms, e.g. "the State of Texas, United States"
   jurisdiction: 'Scotland',
   returnWindowDays: 30,
+  // Delivery estimates in working days, shown in the Terms and FAQ
+  dispatchDays: 2,
+  deliveryDays: '3–5',
 
   // Shown in the FAQ; must match backend/server/utils/pricing.js
   flatShipping: 10,
@@ -20,7 +23,7 @@ const store = {
   // 0 while not VAT registered. If you register, set this and TAX_RATE
   // in pricing.js to 20, and show VAT-inclusive prices
   taxRatePercent: 0,
-  legalLastUpdated: 'September 25, 2026',
+  legalLastUpdated: 'October 1, 2026',
 
   // Shop categories (must match product categories in the database)
   categories: ['Clothing', 'Electronics', 'Home & Garden', 'Sports', 'Books'],
